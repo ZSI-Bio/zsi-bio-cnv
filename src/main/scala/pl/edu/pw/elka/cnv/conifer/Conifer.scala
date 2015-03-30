@@ -11,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
 
 class Conifer(probesFile: RDD[String], bamFile: RDD[(LongWritable, SAMRecordWritable)]) extends Serializable {
 
-  lazy val probes: Array[(String, Long, Long)] =
+  val probes: Array[(String, Long, Long)] =
     probesFile map {
       line => line.split("\t") match {
         case Array(chr, start, stop, _*) =>
@@ -48,13 +48,10 @@ class Conifer(probesFile: RDD[String], bamFile: RDD[(LongWritable, SAMRecordWrit
 
   def calculateRPKMs(): RDD[(Long, Long, Long)] = {
     val totalReads = reads.count
-
     coverageWithLen map {
-      case ((id, len), count) => {
+      case ((id, len), count) =>
         (id, count, 1000000000 * count / len / totalReads)
-      }
     }
-
   }
 
 }

@@ -1,5 +1,7 @@
 package pl.edu.pw.elka.cnv.conifer
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.LongWritable
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
@@ -29,7 +31,16 @@ object Test {
   private def loadProbesFile(sc: SparkContext, path: String): RDD[String] =
     sc.textFile(path)
 
-  private def saveRPKMs(rpkms: RDD[(Long, Long, Long)]) =
-    rpkms.saveAsObjectFile("/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/rpkms.txt")
+  private def saveRPKMs(rpkms: RDD[(Long, Long, Long)]) = {
+    val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/rpkms.txt"
+    maybeRemoveDir(path)
+    rpkms.saveAsTextFile(path)
+  }
+
+  private def maybeRemoveDir(path: String) = {
+    val fs = FileSystem.get(new Configuration())
+    if (fs.exists(new Path(path)))
+      fs.delete(new Path(path), true)
+  }
 
 }
