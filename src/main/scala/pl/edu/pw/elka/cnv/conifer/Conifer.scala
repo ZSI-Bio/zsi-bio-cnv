@@ -37,20 +37,20 @@ class Conifer(probesFile: RDD[String], bamFile: RDD[(LongWritable, SAMRecordWrit
 
   lazy val reads: RDD[SAMRecord] = bamFile.map(read => read._2.get)
 
-  lazy val coverageWithLen: RDD[((Long, Long), Long)] =
+  lazy val coverage: RDD[((Long, Long, Long), Long)] =
     reads.mapPartitions(partition => {
       for {
         read <- partition
         (id, start, stop) <- exonsMap(read.getReferenceName)
         if (read.getAlignmentStart >= start && read.getAlignmentStart <= stop)
-      } yield ((id, stop - start), 1L)
+      } yield ((id, start, stop), 1L)
     }).reduceByKey(_ + _)
 
-  def calculateRPKMs(): RDD[(Long, Long, Long)] = {
-    val totalReads = reads.count
-    coverageWithLen map {
-      case ((id, len), count) =>
-        (id, count, 1000000000 * count / len / totalReads)
+  def calculateRPKMs(): RDD[(Long, Long, Long, Long, Float)] = {
+    val totalReads = reads.count.toFloat
+    coverage map {
+      case ((id, start, stop), count) =>
+        (id, start, stop, count, (1000000000 * count) / (stop - start) / totalReads)
     }
   }
 

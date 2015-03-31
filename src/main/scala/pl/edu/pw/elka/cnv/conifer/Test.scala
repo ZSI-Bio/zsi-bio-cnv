@@ -31,7 +31,7 @@ object Test {
   private def loadProbesFile(sc: SparkContext, path: String): RDD[String] =
     sc.textFile(path)
 
-  private def saveRPKMs(rpkms: RDD[(Long, Long, Long)]) = {
+  private def saveRPKMs(rpkms: RDD[(Long, Long, Long, Long, Float)]) = {
     val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/rpkms.txt"
     maybeRemoveDir(path)
     rpkms.saveAsTextFile(path)
