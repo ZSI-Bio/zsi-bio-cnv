@@ -1,25 +1,15 @@
 package pl.edu.pw.elka.cnv.conifer
 
 import htsjdk.samtools.SAMRecord
-import org.apache.hadoop.io.LongWritable
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.rdd.RDD
-import org.seqdoop.hadoop_bam.SAMRecordWritable
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-class Conifer(probesFile: RDD[String], bamFile: RDD[(LongWritable, SAMRecordWritable)]) extends Serializable {
+class Conifer(probes: Array[(String, Long, Long)], bamFiles: Array[RDD[SAMRecord]]) extends Serializable {
 
-  val probes: Array[(String, Long, Long)] =
-    probesFile map {
-      line => line.split("\t") match {
-        case Array(chr, start, stop, _*) =>
-          (chr, start.toLong, stop.toLong)
-      }
-    } collect
-
-  lazy val exonsMap: mutable.HashMap[String, ArrayBuffer[(Long, Long, Long)]] = {
+  private val exons: mutable.HashMap[String, ArrayBuffer[(Long, Long, Long)]] = {
     val result = new mutable.HashMap[String, ArrayBuffer[(Long, Long, Long)]]
     var counter = 1
 
@@ -35,23 +25,24 @@ class Conifer(probesFile: RDD[String], bamFile: RDD[(LongWritable, SAMRecordWrit
     result
   }
 
-  lazy val reads: RDD[SAMRecord] = bamFile.map(read => read._2.get)
+  def calculateRPKMs: Array[RDD[(Long, Long, Long, Long, Float)]] =
+    bamFiles.map(rpkm)
 
-  lazy val coverage: RDD[((Long, Long, Long), Long)] =
-    reads.mapPartitions(partition => {
-      for {
-        read <- partition
-        (id, start, stop) <- exonsMap(read.getReferenceName)
-        if (read.getAlignmentStart >= start && read.getAlignmentStart <= stop)
-      } yield ((id, start, stop), 1L)
-    }).reduceByKey(_ + _)
-
-  def calculateRPKMs(): RDD[(Long, Long, Long, Long, Float)] = {
-    val totalReads = reads.count.toFloat
-    coverage map {
+  private def rpkm(bamFile: RDD[SAMRecord]): RDD[(Long, Long, Long, Long, Float)] = {
+    val totalReads = bamFile.count.toFloat
+    coverage(bamFile) map {
       case ((id, start, stop), count) =>
         (id, start, stop, count, (1000000000 * count) / (stop - start) / totalReads)
     }
   }
+
+  private def coverage(bamFile: RDD[SAMRecord]): RDD[((Long, Long, Long), Long)] =
+    bamFile.mapPartitions(partition => {
+      for {
+        read <- partition
+        (id, start, stop) <- exons(read.getReferenceName)
+        if (read.getAlignmentStart >= start && read.getAlignmentStart <= stop)
+      } yield ((id, start, stop), 1L)
+    }).reduceByKey(_ + _)
 
 }
