@@ -1,15 +1,27 @@
 package pl.edu.pw.elka.cnv.conifer
 
 import htsjdk.samtools.SAMRecord
+import org.apache.hadoop.io.LongWritable
+import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext.rddToPairRDDFunctions
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
+import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-class Conifer(probes: Array[(String, Long, Long)], bamFiles: Array[RDD[SAMRecord]]) extends Serializable {
+class Conifer(@transient sc: SparkContext, probesFilePath: String, bamFilePaths: Array[String]) extends Serializable {
 
-  private val exons: mutable.HashMap[String, ArrayBuffer[(Long, Long, Long)]] = {
+  private val probes: Array[(String, Long, Long)] =
+    sc.textFile(probesFilePath) map {
+      line => line.split("\t") match {
+        case Array(chr, start, stop, _*) =>
+          (chr, start.toLong, stop.toLong)
+      }
+    } collect
+
+  private val exonsByChromosome: Broadcast[mutable.HashMap[String, ArrayBuffer[(Long, Long, Long)]]] = {
     val result = new mutable.HashMap[String, ArrayBuffer[(Long, Long, Long)]]
     var counter = 1
 
@@ -22,27 +34,32 @@ class Conifer(probes: Array[(String, Long, Long)], bamFiles: Array[RDD[SAMRecord
       }
     }
 
-    result
+    sc.broadcast(result)
   }
 
-  def calculateRPKMs: Array[RDD[(Long, Long, Long, Long, Float)]] =
-    bamFiles.map(rpkm)
+  def calculateRPKMs: RDD[(Long, Iterable[Float])] =
+    bamFilePaths.map(loadBAMFile).map(getRPKMs).reduce(_ ++ _).groupByKey
 
-  private def rpkm(bamFile: RDD[SAMRecord]): RDD[(Long, Long, Long, Long, Float)] = {
+  private def loadBAMFile(path: String): RDD[SAMRecord] =
+    sc.newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](path) map {
+      read => read._2.get
+    }
+
+  private def getRPKMs(bamFile: RDD[SAMRecord]): RDD[(Long, Float)] = {
     val totalReads = bamFile.count.toFloat
-    coverage(bamFile) map {
+    getCoverage(bamFile) map {
       case ((id, start, stop), count) =>
-        (id, start, stop, count, (1000000000 * count) / (stop - start) / totalReads)
+        (id, (1000000000 * count) / (stop - start) / totalReads)
     }
   }
 
-  private def coverage(bamFile: RDD[SAMRecord]): RDD[((Long, Long, Long), Long)] =
-    bamFile.mapPartitions(partition => {
+  private def getCoverage(bamFile: RDD[SAMRecord]): RDD[((Long, Long, Long), Long)] =
+    bamFile.mapPartitions(partition =>
       for {
         read <- partition
-        (id, start, stop) <- exons(read.getReferenceName)
+        (id, start, stop) <- exonsByChromosome.value(read.getReferenceName)
         if (read.getAlignmentStart >= start && read.getAlignmentStart <= stop)
       } yield ((id, start, stop), 1L)
-    }).reduceByKey(_ + _)
+    ).reduceByKey(_ + _)
 
 }
