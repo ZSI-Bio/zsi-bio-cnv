@@ -11,7 +11,7 @@ import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-class Conifer(@transient sc: SparkContext, probesFilePath: String, bamFilePaths: Array[String]) extends Serializable {
+class Conifer(@transient sc: SparkContext, probesFilePath: String, bamFilePaths: Array[String]) extends Serializable with CNVUtils {
 
   private val probes: Array[(String, Long, Long)] =
     sc.textFile(probesFilePath) map {
@@ -25,7 +25,7 @@ class Conifer(@transient sc: SparkContext, probesFilePath: String, bamFilePaths:
     val result = new mutable.HashMap[String, ArrayBuffer[(Long, Long, Long)]]
     var counter = 1
 
-    probes map {
+    probes foreach {
       case (chr, start, stop) => {
         if (!result.contains(chr))
           result(chr) = new ArrayBuffer[(Long, Long, Long)]()
@@ -37,8 +37,18 @@ class Conifer(@transient sc: SparkContext, probesFilePath: String, bamFilePaths:
     sc.broadcast(result)
   }
 
-  def calculateRPKMs: RDD[(Long, Iterable[Float])] =
+  val calculateRPKMs: RDD[(Long, Iterable[Float])] =
     bamFilePaths.map(loadBAMFile).map(getRPKMs).reduce(_ ++ _).groupByKey
+
+  def calculateZRPKMs(minMedian: Float): RDD[(Long, Iterable[Float])] =
+    calculateRPKMs mapValues {
+      case rpkms => (rpkms, median(rpkms.toSeq), stddev(rpkms.toSeq))
+    } filter {
+      case (_, (_, median, _)) => median >= minMedian
+    } flatMap {
+      case (id, (rpkms, median, stddev)) =>
+        rpkms.map(rpkm => (id, zrpkm(rpkm, median, stddev)))
+    } groupByKey
 
   private def loadBAMFile(path: String): RDD[SAMRecord] =
     sc.newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](path) map {
@@ -46,10 +56,10 @@ class Conifer(@transient sc: SparkContext, probesFilePath: String, bamFilePaths:
     }
 
   private def getRPKMs(bamFile: RDD[SAMRecord]): RDD[(Long, Float)] = {
-    val totalReads = bamFile.count.toFloat
+    val total = bamFile.count.toFloat
     getCoverage(bamFile) map {
       case ((id, start, stop), count) =>
-        (id, (1000000000 * count) / (stop - start) / totalReads)
+        (id, rpkm(count, stop - start, total))
     }
   }
 
@@ -57,7 +67,7 @@ class Conifer(@transient sc: SparkContext, probesFilePath: String, bamFilePaths:
     bamFile.mapPartitions(partition =>
       for {
         read <- partition
-        (id, start, stop) <- exonsByChromosome.value(read.getReferenceName)
+        (id, start, stop) <- exonsByChromosome(read.getReferenceName)
         if (read.getAlignmentStart >= start && read.getAlignmentStart <= stop)
       } yield ((id, start, stop), 1L)
     ).reduceByKey(_ + _)

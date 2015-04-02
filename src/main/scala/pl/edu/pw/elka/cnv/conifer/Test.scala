@@ -21,15 +21,21 @@ object Test {
       "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/NA12878.chrom11.ILLUMINA.bwa.CEU.low_coverage.20121211.bam").take(1)
 
     val conifer = new Conifer(sc, probesFilePath, bamFilePaths)
-    val rpkms = conifer.calculateRPKMs
 
-    saveRPKMs(rpkms)
+    saveRPKMs(conifer.calculateRPKMs)
+    saveZRPKMs(conifer.calculateZRPKMs(1F))
   }
 
   private def saveRPKMs(rpkms: RDD[(Long, Iterable[Float])]) = {
     val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/rpkms.txt"
     maybeRemoveDir(path)
     rpkms.saveAsTextFile(path)
+  }
+
+  private def saveZRPKMs(zrpkms: RDD[(Long, Iterable[Float])]) = {
+    val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/zrpkms.txt"
+    maybeRemoveDir(path)
+    zrpkms.saveAsTextFile(path)
   }
 
   private def maybeRemoveDir(path: String) = {
