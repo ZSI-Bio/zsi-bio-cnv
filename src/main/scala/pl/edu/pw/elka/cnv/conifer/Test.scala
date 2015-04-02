@@ -24,16 +24,16 @@ object Test {
     val conifer = new Conifer(sc, probesFilePath, bamFilePaths)
 
     saveRPKMs(conifer.calculateRPKMs)
-    saveZRPKMs(conifer.calculateZRPKMs(1F))
+    saveZRPKMs(conifer.calculateZRPKMs(1D))
   }
 
-  private def saveRPKMs(rpkms: RDD[(Long, Iterable[Float])]) = {
+  private def saveRPKMs(rpkms: RDD[(Long, Iterable[Double])]) = {
     val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/rpkms.txt"
     maybeRemoveDir(path)
     rpkms.saveAsTextFile(path)
   }
 
-  private def saveZRPKMs(zrpkms: RDD[(Long, Iterable[Float])]) = {
+  private def saveZRPKMs(zrpkms: RDD[(Long, Iterable[Double])]) = {
     val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/zrpkms.txt"
     maybeRemoveDir(path)
     zrpkms.saveAsTextFile(path)

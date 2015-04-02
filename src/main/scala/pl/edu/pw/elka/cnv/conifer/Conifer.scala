@@ -3,7 +3,6 @@ package pl.edu.pw.elka.cnv.conifer
 import htsjdk.samtools.SAMRecord
 import org.apache.hadoop.io.LongWritable
 import org.apache.spark.SparkContext
-import org.apache.spark.SparkContext.rddToPairRDDFunctions
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
@@ -37,12 +36,12 @@ class Conifer(@transient sc: SparkContext, probesFilePath: String, bamFilePaths:
     sc.broadcast(result)
   }
 
-  val calculateRPKMs: RDD[(Long, Iterable[Float])] =
+  val calculateRPKMs: RDD[(Long, Iterable[Double])] =
     bamFilePaths.map(loadBAMFile).map(getRPKMs).reduce(_ ++ _).groupByKey
 
-  def calculateZRPKMs(minMedian: Float): RDD[(Long, Iterable[Float])] =
+  def calculateZRPKMs(minMedian: Double): RDD[(Long, Iterable[Double])] =
     calculateRPKMs mapValues {
-      case rpkms => (rpkms, median(rpkms.toSeq), stddev(rpkms.toSeq))
+      case rpkms => (rpkms, median(rpkms.toArray), stddev(rpkms.toArray))
     } filter {
       case (_, (_, median, _)) => median >= minMedian
     } flatMap {
@@ -55,8 +54,8 @@ class Conifer(@transient sc: SparkContext, probesFilePath: String, bamFilePaths:
       read => read._2.get
     }
 
-  private def getRPKMs(bamFile: RDD[SAMRecord]): RDD[(Long, Float)] = {
-    val total = bamFile.count.toFloat
+  private def getRPKMs(bamFile: RDD[SAMRecord]): RDD[(Long, Double)] = {
+    val total = bamFile.count.toDouble
     getCoverage(bamFile) map {
       case ((id, start, stop), count) =>
         (id, rpkm(count, stop - start, total))
