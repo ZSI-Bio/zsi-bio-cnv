@@ -67,7 +67,7 @@ class Conifer(@transient sc: SparkContext, probesFilePath: String, bamFilePaths:
     bamFile.mapPartitions(partition =>
       for {
         read <- partition
-        (id, start, stop) <- exonsByChromosome(read.getReferenceName)
+        (id, start, stop) <- exonsByChromosome.value(read.getReferenceName)
         if (read.getAlignmentStart >= start && read.getAlignmentStart <= stop)
       } yield ((id, start, stop), 1L)
     ).reduceByKey(_ + _)

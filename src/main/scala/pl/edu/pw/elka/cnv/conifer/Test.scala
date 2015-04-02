@@ -11,6 +11,7 @@ object Test {
     val conf = new SparkConf()
       .setAppName("CNV")
       .setMaster("local")
+      .set("spark.driver.host", "127.0.0.1")
     val sc = new SparkContext(conf)
 
     val probesFilePath = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/probes.txt"
