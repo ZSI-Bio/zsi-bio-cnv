@@ -10,7 +10,7 @@ object Test {
   def main(args: Array[String]) {
     val conf = new SparkConf()
       .setAppName("CNV")
-      .setMaster("local")
+      .setMaster("local[2]")
       .set("spark.driver.host", "127.0.0.1")
     val sc = new SparkContext(conf)
 
@@ -21,10 +21,12 @@ object Test {
       "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/NA12878.chrom11.ILLUMINA.bwa.CEU.low_coverage.20121211.bam",
       "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/NA12878.chrom11.ILLUMINA.bwa.CEU.low_coverage.20121211.bam").take(1)
 
-    val conifer = new Conifer(sc, probesFilePath, bamFilePaths)
+    val conifer = new Conifer(sc, probesFilePath, bamFilePaths, 1D, 1)
 
-    saveRPKMs(conifer.calculateRPKMs)
-    saveZRPKMs(conifer.calculateZRPKMs(1D))
+    saveRPKMs(conifer.RPKMsByExone)
+    saveZRPKMs(conifer.ZRPKMsByExone)
+
+    conifer.getSVD("11")
   }
 
   private def saveRPKMs(rpkms: RDD[(Long, Iterable[Double])]) = {
