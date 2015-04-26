@@ -4,75 +4,124 @@ import htsjdk.samtools.SAMRecord
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import pl.edu.pw.elka.cnv.utils.Convertions
+import pl.edu.pw.elka.cnv.utils.ConvertionUtils
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
+/**
+ * Main class for calculation of coverage.
+ *
+ * @param sc Apache Spark context.
+ * @param bedFile RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
+ * @param reads RDD of (sampleId, read) containing all of the reads to be analyzed.
+ * @param parseCigar Flag indicating whether or not to parse a cigar string (default value - false).
+ * @param countingMode Mode of coverage calculation to be used (default value - CountingMode.COUNT_WHEN_STARTS).
+ * @param reduceWorkers Number of reduce workers to be used (default value - 12).
+ */
 class CoverageCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (String, Int, Int))], reads: RDD[(Int, SAMRecord)],
-                      parseCigar: Boolean = false, countingMode: Int = CountingMode.COUNT_WHER_STARTS, reduceWorkers: Int = 12)
-  extends Serializable with Convertions {
+                      parseCigar: Boolean = false, countingMode: Int = CountingMode.COUNT_WHEN_STARTS, reduceWorkers: Int = 12)
+  extends Serializable with ConvertionUtils {
 
-  private val featuresMap: Broadcast[mutable.HashMap[String, Array[ArrayBuffer[(Int, Int, Int)]]]] = sc.broadcast {
-    bedFileToFeaturesMap(bedFile)
+  /**
+   * Map of (chr, (regionId, start end)) optimized for searching by chromosome and position.
+   * It is spread among all of the nodes for quick access.
+   */
+  private val regionsMap: Broadcast[mutable.HashMap[String, Array[ArrayBuffer[(Int, Int, Int)]]]] = sc.broadcast {
+    bedFileToRegionsMap(bedFile)
   }
 
-  def genCoverage: RDD[(Long, Int)] =
+  /**
+   * Method for calculation of coverage based on regions and reads given in class constructor.
+   * It returns coverage in an internal representation for efficiency purposes. One can convert it using methods from ConvertionUtils.
+   *
+   * @return RDD of (coverageId, coverage). For more information about coverageId see encodeCoverageId method.
+   */
+  def calculateCoverage: RDD[(Long, Int)] =
     reads.mapPartitions(partition => {
-      val featuresCountMap = new mutable.HashMap[Long, Int]
+      val regionsCountMap = new mutable.HashMap[Long, Int]
 
       for ((sampleId, read) <- partition)
-        if (featuresMap.value.contains(read.getReferenceName)) {
-          val features = featuresMap.value(read.getReferenceName)
+        if (regionsMap.value.contains(read.getReferenceName)) {
+          val regions = regionsMap.value(read.getReferenceName)
           val bases = genBases(read)
           for ((baseStart, baseEnd) <- bases) {
-            val featuresToCheck = getFeaturesToCheck(baseStart, features)
-            if (featuresToCheck != null)
-              for ((featureId, featureStart, featureEnd) <- featuresToCheck)
-                if (countingCondition(baseStart, baseEnd, featureStart, featureEnd)) {
-                  val coverageId = encodeCoverageId(sampleId, featureId)
-                  if (!featuresCountMap.contains(coverageId))
-                    featuresCountMap(coverageId) = 1
+            val regionsToCheck = getRegionsToCheck(baseStart, regions)
+            if (regionsToCheck != null)
+              for ((regionId, regionStart, regionEnd) <- regionsToCheck)
+                if (countingCondition(baseStart, baseEnd, regionStart, regionEnd)) {
+                  val coverageId = encodeCoverageId(sampleId, regionId)
+                  if (!regionsCountMap.contains(coverageId))
+                    regionsCountMap(coverageId) = 1
                   else
-                    featuresCountMap(coverageId) += 1
+                    regionsCountMap(coverageId) += 1
                 }
           }
         }
 
-      featuresCountMap.iterator
+      regionsCountMap.iterator
     }).reduceByKey(_ + _, reduceWorkers)
 
-  private def countingCondition(baseStart: Int, baseEnd: Int, featureStart: Int, featureEnd: Int): Boolean =
+  /**
+   * Method returning flag that determines whether or not given base covers given region according to a chosen counting mode.
+   *
+   * @param baseStart Starting position of a given base.
+   * @param baseEnd Ending position of a given base.
+   * @param regionStart Starting position of a given region.
+   * @param regionEnd Starting position of a given region.
+   * @return Boolean flag.
+   */
+  private def countingCondition(baseStart: Int, baseEnd: Int, regionStart: Int, regionEnd: Int): Boolean =
     countingMode match {
       case CountingMode.COUNT_WHEN_WHITIN =>
-        if (baseStart >= featureStart && baseEnd <= featureEnd) true
+        if (baseStart >= regionStart && baseEnd <= regionEnd) true
         else false
       case CountingMode.COUNT_WHEN_OVERLAPS =>
-        if ((baseStart >= featureStart && baseStart <= featureEnd)
-          || (baseStart <= featureStart && baseEnd >= featureEnd)
-          || (baseEnd >= featureStart && baseEnd <= featureEnd)) true
+        if ((baseStart >= regionStart && baseStart <= regionEnd)
+          || (baseStart <= regionStart && baseEnd >= regionEnd)
+          || (baseEnd >= regionStart && baseEnd <= regionEnd)) true
         else false
-      case CountingMode.COUNT_WHER_STARTS =>
-        if (baseStart >= featureStart && baseStart <= featureEnd) true
+      case CountingMode.COUNT_WHEN_STARTS =>
+        if (baseStart >= regionStart && baseStart <= regionEnd) true
         else false
     }
 
-  private def getFeaturesToCheck(baseStart: Int, features: Array[ArrayBuffer[(Int, Int, Int)]]): ArrayBuffer[(Int, Int, Int)] = {
+  /**
+   * Method returning regions that a given base may overlap. It optimizes calculation of coverage by narrowing area of interest to nearby regions.
+   *
+   * @param baseStart Starting position of a given base.
+   * @param regions Array of (regionId, start end) optimized for searching by position.
+   * @return Array of (regionId, start end) containing nearby regions.
+   */
+  private def getRegionsToCheck(baseStart: Int, regions: Array[ArrayBuffer[(Int, Int, Int)]]): ArrayBuffer[(Int, Int, Int)] = {
     val startId = baseStart / 10000
-    var result = features(startId)
+    var result = regions(startId)
 
-    if (startId > 0 && result != null && features(startId - 1) != null)
-      result = result ++ (features(startId - 1))
-    else if (startId > 0 && result == null && features(startId - 1) != null)
-      result = features(startId - 1)
+    if (startId > 0 && result != null && regions(startId - 1) != null)
+      result = result ++ (regions(startId - 1))
+    else if (startId > 0 && result == null && regions(startId - 1) != null)
+      result = regions(startId - 1)
 
     result
   }
 
+  /**
+   * Method generating bases from given read by parsing a cigar string. If parseCigar is set to false it simply returns (readStart, readEnd).
+   *
+   * @param read Read to be analyzed.
+   * @return Array of (baseStart, baseEnd) containing all of the bases generated from a given read.
+   */
   private def genBases(read: SAMRecord): ArrayBuffer[(Int, Int)] =
     if (parseCigar) genBasesFromCigar(read.getAlignmentStart, read.getCigar)
     else ArrayBuffer((read.getAlignmentStart, read.getAlignmentEnd))
 
+  /**
+   * Method generating bases by parsing a cigar string.
+   *
+   * @param alignStart Alignment start position of a read.
+   * @param cigar Cigar string of a read.
+   * @return Array of (baseStart, baseEnd) containing all of the bases generated from a given cigar string.
+   */
   private def genBasesFromCigar(alignStart: Int, cigar: htsjdk.samtools.Cigar): ArrayBuffer[(Int, Int)] = {
     val result = new ArrayBuffer[(Int, Int)]
     val numCigElem = cigar.numCigarElements

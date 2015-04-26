@@ -1,34 +1,43 @@
 package pl.edu.pw.elka.cnv.conifer
 
 import htsjdk.samtools.SAMRecord
-import org.apache.hadoop.io.LongWritable
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 import pl.edu.pw.elka.cnv.coverage.CoverageCounter
-import pl.edu.pw.elka.cnv.utils.Convertions
+import pl.edu.pw.elka.cnv.utils.{ConvertionUtils, FileUtils}
 
+/**
+ * Main class for CoNIFER algorithm.
+ *
+ * @param sc Apache Spark context.
+ * @param bedFilePath Path to folder containing BED file.
+ * @param bamFilesPath Path to folder containing BAM files.
+ */
 class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String)
-  extends Serializable with Convertions {
+  extends Serializable with FileUtils with ConvertionUtils {
 
+  /**
+   * Array of (sampleId, samplePath) containing all of the found BAM files.
+   */
   private val samples: Array[(Int, String)] = scanForSamples(bamFilesPath)
+
+  /**
+   * RDD of (sampleId, read) containing all of the reads to be analyzed.
+   */
+  private val reads: RDD[(Int, SAMRecord)] = loadReads(sc, samples)
+
+  /**
+   * RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
+   */
   val bedFile: RDD[(Int, (String, Int, Int))] = readBedFile(sc, bedFilePath)
 
-  private val reads: RDD[(Int, SAMRecord)] =
-    samples.foldLeft(sc.parallelize[(Int, SAMRecord)](Seq())) {
-      case (acc, (sampleId, sampleName)) => acc union {
-        sc.newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](sampleName) map {
-          read => (sampleId, read._2.get)
-        }
-      }
-    }
-
-  val coverage: RDD[(Int, Iterable[(Int, Int)])] =
-    new CoverageCounter(sc, bedFile, reads).genCoverage map {
-      case (coverageId, coverage) => (decodeCoverageId(coverageId), coverage)
-    } map {
-      case ((sampleId, featureId), coverage) => (featureId, (sampleId, coverage))
-    } groupByKey
+  /**
+   * RDD of (regionId, (sampleId, coverage)) containing coverage.
+   */
+  val coverage: RDD[(Int, Iterable[(Int, Int)])] = {
+    val counter = new CoverageCounter(sc, bedFile, reads)
+    coverageToRegionCoverage(counter.calculateCoverage)
+  }
 
   //  val RPKMsByExone: RDD[(Long, Iterable[Double])] =
   //    bamFilePaths.map(loadBAMFile).map(getRPKMs).reduce(_ ++ _).groupByKey.cache
