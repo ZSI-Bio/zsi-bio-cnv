@@ -11,3 +11,13 @@ libraryDependencies ++= Seq(
   "org.seqdoop" % "hadoop-bam" % "7.0.0"
 )
 
+lazy val copyDocAssetsTask = taskKey[Unit]("Copy doc assets")
+
+copyDocAssetsTask := {
+  val sourceDir = file("resources/doc-resources")
+  val targetDir = (target in(Compile, doc)).value
+  IO.copyDirectory(sourceDir, targetDir)
+}
+
+copyDocAssetsTask <<= copyDocAssetsTask triggeredBy (doc in Compile)
+

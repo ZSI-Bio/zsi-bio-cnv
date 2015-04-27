@@ -33,9 +33,9 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (String, I
 
   /**
    * Method for calculation of coverage based on regions and reads given in class constructor.
-   * It returns coverage in an internal representation for efficiency purposes. One can convert it using methods from ConvertionUtils.
+   * It returns coverage in an internal representation for efficiency purposes. One can convert it using [[coverageToRegionCoverage]] method.
    *
-   * @return RDD of (coverageId, coverage). For more information about coverageId see encodeCoverageId method.
+   * @return RDD of (coverageId, coverage). For more information about coverageId see [[encodeCoverageId]] method.
    */
   def calculateCoverage: RDD[(Long, Int)] =
     reads.mapPartitions(partition => {
