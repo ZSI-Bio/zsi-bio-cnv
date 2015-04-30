@@ -1,3 +1,5 @@
+package pl.edu.pw.elka.cnv
+
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.FunSuite
 
