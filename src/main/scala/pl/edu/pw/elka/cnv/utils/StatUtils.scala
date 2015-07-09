@@ -7,20 +7,48 @@ package pl.edu.pw.elka.cnv.utils
  */
 trait StatUtils {
 
-  //  def stddev(data: Array[Double]): Double = {
-  //    val mean = data.sum / data.size
-  //    data.map(x => (x - mean) * (x - mean)).sum / data.size
-  //  }
-  //
-  //  def median(data: Array[Double]): Double = {
-  //    val (lower, upper) = data.sorted.splitAt(data.size / 2)
-  //    if (data.size % 2 == 0) (lower.last + upper.head) / 2 else upper.head
-  //  }
-  //
-  //  def rpkm(count: Long, len: Long, total: Double): Double =
-  //    return (1000000000 * count) / (len * total)
-  //
-  //  def zrpkm(rpkm: Double, median: Double, stddev: Double): Double =
-  //    return (rpkm - median) / stddev
+  /**
+   * Method for stddev calculation.
+   *
+   * @param data Sequence of double values.
+   * @return Calculated stddev value.
+   */
+  def stddev(data: Seq[Double]): Double = {
+    val mean = data.sum / data.size
+    data.map(x => (x - mean) * (x - mean)).sum / data.size
+  }
+
+  /**
+   * Method for median calculation.
+   *
+   * @param data Sequence of double values.
+   * @return Calculated median value.
+   */
+  def median(data: Seq[Double]): Double = {
+    val (lower, upper) = data.sorted.splitAt(data.size / 2)
+    if (data.size % 2 == 0) (lower.last + upper.head) / 2 else upper.head
+  }
+
+  /**
+   * Method for RPKM calculation.
+   *
+   * @param count Coverage of given region by reads from given sample.
+   * @param len Length of given region.
+   * @param total Total number of reads in given sample.
+   * @return Calculated RPKM value for given region and sample.
+   */
+  def rpkm(count: Int, len: Int, total: Long): Double =
+    return (1000000000d * count) / (len * total)
+
+  /**
+   * Method for ZRPKM calculation.
+   *
+   * @param rpkm RPKM value for given region and sample.
+   * @param median Median of RPKM values for given region.
+   * @param stddev Stddev of RPKM values for given region.
+   * @return Calculated ZRPKM value for given region and sample.
+   */
+  def zrpkm(rpkm: Double, median: Double, stddev: Double): Double =
+    return (rpkm - median) / stddev
 
 }
