@@ -1,5 +1,7 @@
 package pl.edu.pw.elka.cnv.utils
 
+import java.io.Serializable
+
 import org.scalatest.Matchers
 import pl.edu.pw.elka.cnv.SparkFunSuite
 
@@ -12,19 +14,19 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
 
   sparkTest("bedFileToRegionsMap test") {
     val input = sc parallelize {
-      Array((2429, ("chr1", 19203909, 19204106)),
-        (101874, ("chr10", 113928069, 113928282)),
-        (179177, ("chr20", 47115835, 47116753)))
+      Array((2429, (1, 19203909, 19204106)),
+        (101874, (10, 113928069, 113928282)),
+        (179177, (20, 47115835, 47116753)))
     }
     val output = convertions.bedFileToRegionsMap(input)
 
     output.keys should have size (3)
     all(output.values) should have size (25000)
 
-    output.keys should contain theSameElementsAs Array("chr1", "chr10", "chr20")
-    output("chr1")(19203909 / 10000) should contain theSameElementsAs Array((2429, 19203909, 19204106))
-    output("chr10")(113928069 / 10000) should contain theSameElementsAs Array((101874, 113928069, 113928282))
-    output("chr20")(47115835 / 10000) should contain theSameElementsAs Array((179177, 47115835, 47116753))
+    output.keys should contain theSameElementsAs Array(1, 10, 20)
+    output(1)(19203909 / 10000) should contain theSameElementsAs Array((2429, 19203909, 19204106))
+    output(10)(113928069 / 10000) should contain theSameElementsAs Array((101874, 113928069, 113928282))
+    output(20)(47115835 / 10000) should contain theSameElementsAs Array((179177, 47115835, 47116753))
   }
 
   sparkTest("coverageToRegionCoverage test") {
@@ -54,6 +56,12 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
     convertions.decodeCoverageId(0L) should be((0, 0))
     convertions.decodeCoverageId(5000425385L) should be((5, 425385))
     convertions.decodeCoverageId(12092619574L) should be((12, 92619574))
+  }
+
+  test("chrStrToInt test") {
+    convertions.chrStrToInt("chr10") should be(10)
+    convertions.chrStrToInt("chrX") should be(23)
+    convertions.chrStrToInt("test") should be(0)
   }
 
 }

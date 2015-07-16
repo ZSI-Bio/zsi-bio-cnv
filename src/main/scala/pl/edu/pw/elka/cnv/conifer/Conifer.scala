@@ -2,9 +2,13 @@ package pl.edu.pw.elka.cnv.conifer
 
 import htsjdk.samtools.SAMRecord
 import org.apache.spark.SparkContext
+import org.apache.spark.mllib.linalg.distributed.RowMatrix
+import org.apache.spark.mllib.linalg.{Matrices, Vectors}
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.coverage.CoverageCounter
+import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
 import pl.edu.pw.elka.cnv.utils.{ConvertionUtils, FileUtils}
+import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
 
 /**
  * Main class for CoNIFER algorithm.
@@ -13,23 +17,23 @@ import pl.edu.pw.elka.cnv.utils.{ConvertionUtils, FileUtils}
  * @param bedFilePath Path to folder containing BED file.
  * @param bamFilesPath Path to folder containing BAM files.
  */
-class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String)
+class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String, minMedian: Double = 1.0, svd: Int = 12)
   extends Serializable with FileUtils with ConvertionUtils {
 
   /**
    * Array of (sampleId, samplePath) containing all of the found BAM files.
    */
-  private val samples: Array[(Int, String)] = scanForSamples(bamFilesPath)
+  val samples: Array[(Int, String)] = scanForSamples(bamFilesPath)
 
   /**
    * RDD of (sampleId, read) containing all of the reads to be analyzed.
    */
-  private val reads: RDD[(Int, SAMRecord)] = loadReads(sc, samples)
+  val reads: RDD[(Int, SAMRecord)] = loadReads(sc, samples)
 
   /**
    * RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
    */
-  val bedFile: RDD[(Int, (String, Int, Int))] = readBedFile(sc, bedFilePath)
+  val bedFile: RDD[(Int, (Int, Int, Int))] = readBedFile(sc, bedFilePath)
 
   /**
    * RDD of (regionId, (sampleId, coverage)) containing coverage.
@@ -39,42 +43,37 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
     coverageToRegionCoverage(counter.calculateCoverage)
   }
 
-  //  val RPKMsByExone: RDD[(Long, Iterable[Double])] =
-  //    bamFilePaths.map(loadBAMFile).map(getRPKMs).reduce(_ ++ _).groupByKey.cache
-  //
-  //  val ZRPKMsByExone: RDD[(Long, Iterable[Double])] =
-  //    RPKMsByExone mapValues {
-  //      rpkms => (rpkms, median(rpkms.toArray), stddev(rpkms.toArray))
-  //    } filter {
-  //      case (_, (_, median, _)) => median >= minMedian
-  //    } flatMap {
-  //      case (id, (rpkms, median, stddev)) =>
-  //        rpkms.map(rpkm => (id, zrpkm(rpkm, median, stddev)))
-  //    } groupByKey() cache()
-  //
-  //
-  //  private def getRPKMs(bamFile: RDD[SAMRecord]): RDD[(Long, Double)] = {
-  //    val total = bamFile.count.toDouble
-  //    getCoverage(bamFile) map {
-  //      case ((id, start, stop), count) =>
-  //        (id, rpkm(count, stop - start, total))
-  //    }
-  //  }
-  //
-  //  def getSVD(chr: String) = {
-  //    val exons = exonsByChromosome.value(chr)
-  //    val (minId, maxId) = (exons.minBy(_._1)._1, exons.maxBy(_._1)._1)
-  //
-  //    val rows = ZRPKMsByExone filter {
-  //      case (id, _) => id >= minId && id <= maxId
-  //    } map {
-  //      case (_, zrpkms) => Vectors.dense(zrpkms.toArray)
-  //    }
-  //
-  //    System.console().printf("Rows: " + rows.count + "\n")
-  //    System.console().printf("Cols: " + rows.first.size + "\n")
-  //
-  //    //TODO calculation of SVD
-  //  }
+  /**
+   * RDD of (regionId, (sampleId, rpkm)) containing RPKM values.
+   */
+  val rpkms: RDD[(Int, Iterable[(Int, Double)])] = {
+    val counter = new RpkmsCounter(reads, bedFile, coverage)
+    counter.calculateRpkms
+  }
+
+  /**
+   * RDD of (regionId, (sampleId, zrpkm)) containing ZRPKM values.
+   */
+  val zrpkms: RDD[(Int, Iterable[(Int, Double)])] = {
+    val counter = new ZrpkmsCounter(rpkms, minMedian)
+    counter.calculateZrpkms
+  }
+
+  def calculateSVD = {
+    val rows = zrpkms.sortByKey().map {
+      case (_, samplesZRPKM) => Vectors.dense(samplesZRPKM.toArray.sorted.map(_._2))
+    }
+
+    val svd = new RowMatrix(rows).computeSVD(samples.size, computeU = true)
+    val newS = removeComponents(svd.s)
+
+    svd.U.multiply(Matrices.diag(newS)).multiply(svd.V)
+  }
+
+  private def removeComponents(vec: org.apache.spark.mllib.linalg.Vector): org.apache.spark.mllib.linalg.Vector = {
+    val tmp = vec.toArray
+    (0 until svd) map (tmp.update(_, 0))
+    Vectors.dense(tmp)
+  }
 
 }

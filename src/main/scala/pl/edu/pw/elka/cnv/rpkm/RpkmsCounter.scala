@@ -11,13 +11,13 @@ import pl.edu.pw.elka.cnv.utils.StatUtils
  * @param bedFile RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
  * @param coverage RDD of (regionId, (sampleId, coverage)) containing coverage of given regions by given samples.
  */
-class RpkmsCounter(reads: RDD[(Int, SAMRecord)], bedFile: RDD[(Int, (String, Int, Int))], coverage: RDD[(Int, Iterable[(Int, Int)])])
+class RpkmsCounter(reads: RDD[(Int, SAMRecord)], bedFile: RDD[(Int, (Int, Int, Int))], coverage: RDD[(Int, Iterable[(Int, Int)])])
   extends Serializable with StatUtils {
 
   /**
    * Map of (sampleId, total) containing total number of reads in given samples.
    */
-  private val readsCount = reads.countByKey
+  private val readsCount: collection.Map[Int, Long] = reads.countByKey
 
   /**
    * Method for calculation of RPKM values based on reads, BED file and coverage given in class constructor.

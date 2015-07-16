@@ -13,7 +13,7 @@ import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
  *
  * Trait for scanning and loading data from BED and BAM files.
  */
-trait FileUtils {
+trait FileUtils extends ConvertionUtils {
 
   /**
    * Method for scanning for BAM files under given path.
@@ -52,11 +52,11 @@ trait FileUtils {
    * @param path Path to folder containing BED file.
    * @return RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
    */
-  def readBedFile(sc: SparkContext, path: String): RDD[(Int, (String, Int, Int))] =
+  def readBedFile(sc: SparkContext, path: String): RDD[(Int, (Int, Int, Int))] =
     sc.textFile(path).zipWithIndex map {
       case (line, regionId) => line.split("\t") match {
         case Array(chr, start, end, _*) =>
-          (regionId.toInt, (chr, start.toInt, end.toInt))
+          (regionId.toInt, (chrStrToInt(chr), start.toInt, end.toInt))
       }
     }
 

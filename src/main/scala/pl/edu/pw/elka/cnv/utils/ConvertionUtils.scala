@@ -18,8 +18,8 @@ trait ConvertionUtils {
    * @param bedFile RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
    * @return Map of (chr, (regionId, start end)) optimized for calculating coverage.
    */
-  def bedFileToRegionsMap(bedFile: RDD[(Int, (String, Int, Int))]): mutable.HashMap[String, Array[ArrayBuffer[(Int, Int, Int)]]] = {
-    val result = new mutable.HashMap[String, Array[ArrayBuffer[(Int, Int, Int)]]]
+  def bedFileToRegionsMap(bedFile: RDD[(Int, (Int, Int, Int))]): mutable.HashMap[Int, Array[ArrayBuffer[(Int, Int, Int)]]] = {
+    val result = new mutable.HashMap[Int, Array[ArrayBuffer[(Int, Int, Int)]]]
     for ((regionId, (chr, start, end)) <- bedFile.collect) {
       if (!result.contains(chr))
         result(chr) = new Array[ArrayBuffer[(Int, Int, Int)]](25000)
@@ -62,5 +62,20 @@ trait ConvertionUtils {
    */
   def decodeCoverageId(coverageId: Long): (Int, Int) =
     ((coverageId / 1000000000L).toInt, (coverageId % 1000000000L).toInt)
+
+  /**
+   * Method for converting chromosome names from strings to integers.
+   *
+   * @param chr Chromosome name as string.
+   * @return Chromosome name as integer.
+   */
+  def chrStrToInt(chr: String): Int =
+    chr.replace("chr", "") match {
+      case "X" => 23
+      case "Y" => 24
+      case tmp =>
+        if (tmp matches "\\d*") tmp.toInt
+        else 0
+    }
 
 }

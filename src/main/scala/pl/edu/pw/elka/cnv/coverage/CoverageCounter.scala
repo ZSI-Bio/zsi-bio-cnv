@@ -4,7 +4,7 @@ import htsjdk.samtools.SAMRecord
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import pl.edu.pw.elka.cnv.utils.ConvertionUtils
+import pl.edu.pw.elka.cnv.utils.{ConvertionUtils, FileUtils}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -19,15 +19,15 @@ import scala.collection.mutable.ArrayBuffer
  * @param countingMode Mode of coverage calculation to be used (default value - CountingMode.COUNT_WHEN_STARTS).
  * @param reduceWorkers Number of reduce workers to be used (default value - 12).
  */
-class CoverageCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (String, Int, Int))], reads: RDD[(Int, SAMRecord)],
+class CoverageCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (Int, Int, Int))], reads: RDD[(Int, SAMRecord)],
                       parseCigar: Boolean = false, countingMode: Int = CountingMode.COUNT_WHEN_STARTS, reduceWorkers: Int = 12)
-  extends Serializable with ConvertionUtils {
+  extends Serializable with ConvertionUtils with FileUtils {
 
   /**
    * Map of (chr, (regionId, start end)) optimized for searching by chromosome and position.
    * It is spread among all of the nodes for quick access.
    */
-  private val regionsMap: Broadcast[mutable.HashMap[String, Array[ArrayBuffer[(Int, Int, Int)]]]] = sc.broadcast {
+  private val regionsMap: Broadcast[mutable.HashMap[Int, Array[ArrayBuffer[(Int, Int, Int)]]]] = sc.broadcast {
     bedFileToRegionsMap(bedFile)
   }
 
@@ -42,8 +42,8 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (String, I
       val regionsCountMap = new mutable.HashMap[Long, Int]
 
       for ((sampleId, read) <- partition)
-        if (regionsMap.value.contains(read.getReferenceName)) {
-          val regions = regionsMap.value(read.getReferenceName)
+        if (regionsMap.value.contains(chrStrToInt(read.getReferenceName))) {
+          val regions = regionsMap.value(chrStrToInt(read.getReferenceName))
           val bases = genBases(read)
           for ((baseStart, baseEnd) <- bases) {
             val regionsToCheck = getRegionsToCheck(baseStart, regions)
