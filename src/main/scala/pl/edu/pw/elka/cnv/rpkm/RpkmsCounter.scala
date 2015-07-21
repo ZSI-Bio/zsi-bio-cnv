@@ -26,7 +26,7 @@ class RpkmsCounter(reads: RDD[(Int, SAMRecord)], bedFile: RDD[(Int, (Int, Int, I
    */
   def calculateRpkms: RDD[(Int, Iterable[(Int, Double)])] =
     bedFile join coverage flatMap {
-      case (regionId, ((_, start, end), samplesCoverage)) => samplesCoverage map {
+      case (regionId, ((_, start, end), sampleCoverages)) => sampleCoverages map {
         case (sampleId, coverage) => (regionId, (sampleId, rpkm(coverage, end - start, readsCount(sampleId))))
       }
     } groupByKey

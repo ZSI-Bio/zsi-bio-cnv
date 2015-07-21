@@ -19,24 +19,24 @@ trait FileUtils extends ConvertionUtils {
    * Method for scanning for BAM files under given path.
    *
    * @param path Path to folder containing BAM files.
-   * @return Array of (sampleId, samplePath) containing all of the found BAM files.
+   * @return Map of (sampleId, samplePath) containing all of the found BAM files.
    */
-  def scanForSamples(path: String): Array[(Int, String)] =
+  def scanForSamples(path: String): Map[Int, String] =
     new File(path).listFiles.filter(
-      file => file.getName.endsWith(".bam")
+      _.getName.endsWith(".bam")
     ).zipWithIndex.map {
       case (file, index) =>
         (index, file.getPath)
-    }
+    } toMap
 
   /**
    * Method for loading all of the samples into single RDD.
    *
    * @param sc Apache Spark context.
-   * @param samples Array of (sampleId, samplePath) containing all of the samples to be analyzed.
+   * @param samples Map of (sampleId, samplePath) containing all of the samples to be analyzed.
    * @return RDD of (sampleId, read) containing all of the reads to be analyzed.
    */
-  def loadReads(sc: SparkContext, samples: Array[(Int, String)]): RDD[(Int, SAMRecord)] =
+  def loadReads(sc: SparkContext, samples: Map[Int, String]): RDD[(Int, SAMRecord)] =
     samples.foldLeft(sc.parallelize[(Int, SAMRecord)](Seq())) {
       case (acc, (sampleId, samplePath)) => acc union {
         sc.newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](samplePath) map {

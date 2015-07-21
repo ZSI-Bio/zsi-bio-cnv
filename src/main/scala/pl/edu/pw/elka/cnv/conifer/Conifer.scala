@@ -21,9 +21,9 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   extends Serializable with FileUtils with ConvertionUtils {
 
   /**
-   * Array of (sampleId, samplePath) containing all of the found BAM files.
+   * Map of (sampleId, samplePath) containing all of the found BAM files.
    */
-  val samples: Array[(Int, String)] = scanForSamples(bamFilesPath)
+  val samples: Map[Int, String] = scanForSamples(bamFilesPath)
 
   /**
    * RDD of (sampleId, read) containing all of the reads to be analyzed.
@@ -55,7 +55,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    * RDD of (regionId, (sampleId, zrpkm)) containing ZRPKM values.
    */
   val zrpkms: RDD[(Int, Iterable[(Int, Double)])] = {
-    val counter = new ZrpkmsCounter(rpkms, minMedian)
+    val counter = new ZrpkmsCounter(samples, rpkms, minMedian)
     counter.calculateZrpkms
   }
 
