@@ -24,7 +24,7 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (Int, Int,
   extends Serializable with ConvertionUtils with FileUtils {
 
   /**
-   * Map of (chr, (regionId, start end)) optimized for searching by chromosome and position.
+   * Map of (chr, (regionId, start, end)) optimized for searching by chromosome and position.
    * It is spread among all of the nodes for quick access.
    */
   private val regionsMap: Broadcast[mutable.HashMap[Int, Array[ArrayBuffer[(Int, Int, Int)]]]] = sc.broadcast {

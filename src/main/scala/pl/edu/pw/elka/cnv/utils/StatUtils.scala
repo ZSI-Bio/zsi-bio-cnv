@@ -15,7 +15,7 @@ trait StatUtils {
    */
   def stddev(data: Seq[Double]): Double = {
     val mean = data.sum / data.size
-    data.map(x => (x - mean) * (x - mean)).sum / data.size
+    math.sqrt(data.map(x => math.pow(x - mean, 2)).sum / data.size)
   }
 
   /**

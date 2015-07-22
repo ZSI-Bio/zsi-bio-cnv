@@ -17,7 +17,7 @@ class RpkmsCounter(reads: RDD[(Int, SAMRecord)], bedFile: RDD[(Int, (Int, Int, I
   /**
    * Map of (sampleId, total) containing total number of reads in given samples.
    */
-  private val readsCount: collection.Map[Int, Long] = reads.countByKey
+  private val readCounts: collection.Map[Int, Long] = reads.countByKey
 
   /**
    * Method for calculation of RPKM values based on reads, BED file and coverage given in class constructor.
@@ -27,7 +27,7 @@ class RpkmsCounter(reads: RDD[(Int, SAMRecord)], bedFile: RDD[(Int, (Int, Int, I
   def calculateRpkms: RDD[(Int, Iterable[(Int, Double)])] =
     bedFile join coverage flatMap {
       case (regionId, ((_, start, end), sampleCoverages)) => sampleCoverages map {
-        case (sampleId, coverage) => (regionId, (sampleId, rpkm(coverage, end - start, readsCount(sampleId))))
+        case (sampleId, coverage) => (regionId, (sampleId, rpkm(coverage, end - start, readCounts(sampleId))))
       }
     } groupByKey
 

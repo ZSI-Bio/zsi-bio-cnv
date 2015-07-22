@@ -3,6 +3,8 @@ package pl.edu.pw.elka.cnv.zrpkm
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.utils.StatUtils
 
+import scala.collection.mutable
+
 /**
  * Main class for calculation of ZRPKM values.
  *
@@ -41,11 +43,10 @@ class ZrpkmsCounter(samples: Map[Int, String], rpkms: RDD[(Int, Iterable[(Int, D
    * @return Sequence of (sampleId, rpkm) containing RPKM values for given samples.
    */
   private def fillWithZeros(sampleRpkms: Iterable[(Int, Double)]): Seq[(Int, Double)] = {
-    val result = sampleRpkms.toMap
-    sampleIds foreach {
-      id => if (!result.contains(id)) result.updated(id, 0.0)
-    }
+    val result = new mutable.HashMap[Int, Double]
+    sampleIds.foreach(x => result(x) = 0.0)
+    sampleRpkms.foreach(x => result(x._1) = x._2)
     result.toSeq
   }
-  
+
 }
