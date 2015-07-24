@@ -17,23 +17,44 @@ object Test {
     val bedFilePath = "/Users/mariusz-macbook/Downloads/ZSI-Bio/Tools/conifer_v0.2.2/exomes_data/20120518.consensus.annotation.txt"
     val bamFilesPath = "/Users/mariusz-macbook/Downloads/ZSI-Bio/Tools/conifer_v0.2.2/exomes_data"
 
+    val start = System.currentTimeMillis
+
     val conifer = new Conifer(sc, bedFilePath, bamFilesPath)
+    val loadingTime = System.currentTimeMillis
 
-    saveBedFile(conifer.bedFile.sortByKey())
-    saveCoverage(conifer.coverage.sortByKey())
-    saveRpkms(conifer.rpkms.sortByKey())
-    saveZrpkms(conifer.zrpkms.sortByKey())
+    val coverage = conifer.coverage
+    val coverageTime = System.currentTimeMillis
 
-    val mat = conifer.calculateSVD
+    val rpkms = conifer.rpkms(coverage)
+    val rpkmTime = System.currentTimeMillis
 
-    System.console().printf("Samples: " + conifer.samples.size + "\n")
-    System.console().printf("Reads: " + conifer.reads.count + "\n")
-    System.console().printf("BED: " + conifer.bedFile.count + "\n")
-    System.console().printf("Coverage: " + conifer.coverage.count + "\n")
-    System.console().printf("RPKMS: " + conifer.rpkms.count + "\n")
-    System.console().printf("ZRPKMS: " + conifer.zrpkms.count + "\n")
-    System.console().printf("Matrix rows: " + mat.numRows + "\n")
-    System.console().printf("Matrix cols: " + mat.numCols + "\n")
+    val zrpkms = conifer.zrpkms(rpkms)
+    val zrpkmTime = System.currentTimeMillis
+
+    conifer.calculateSVD(zrpkms)
+    val svdTime = System.currentTimeMillis
+
+    System.console().printf(
+      "Loading: " + (loadingTime - start) + " ms\n" +
+      "Coverage: " + (coverageTime - loadingTime) + " ms\n" +
+      "RPKM: " + (rpkmTime - coverageTime) + " ms\n" +
+      "ZRPKM: " + (zrpkmTime - rpkmTime) + " ms\n" +
+      "SVD: " + (svdTime - zrpkmTime) + " ms\n"
+    )
+
+    //    saveBedFile(conifer.bedFile.sortByKey())
+    //    saveCoverage(conifer.coverage.sortByKey())
+    //    saveRpkms(conifer.rpkms.sortByKey())
+    //    saveZrpkms(conifer.zrpkms.sortByKey())
+
+    //    System.console().printf("Samples: " + conifer.samples.size + "\n")
+    //    System.console().printf("Reads: " + conifer.reads.count + "\n")
+    //    System.console().printf("BED: " + conifer.bedFile.count + "\n")
+    //    System.console().printf("Coverage: " + conifer.coverage.count + "\n")
+    //    System.console().printf("RPKMS: " + conifer.rpkms.count + "\n")
+    //    System.console().printf("ZRPKMS: " + conifer.zrpkms.count + "\n")
+    //    System.console().printf("Matrix rows: " + mat.numRows + "\n")
+    //    System.console().printf("Matrix cols: " + mat.numCols + "\n")
 
   }
 

@@ -12,13 +12,13 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
 
   val convertions = new ConvertionUtils with Serializable
 
-  sparkTest("bedFileToRegionsMap test") {
+  sparkTest("bedFileToChromosomesMap test") {
     val input = sc parallelize {
       Array((2429, (1, 19203909, 19204106)),
         (101874, (10, 113928069, 113928282)),
         (179177, (20, 47115835, 47116753)))
     }
-    val output = convertions.bedFileToRegionsMap(input)
+    val output = convertions.bedFileToChromosomesMap(input)
 
     output.keys should have size (3)
     all(output.values) should have size (25000)
