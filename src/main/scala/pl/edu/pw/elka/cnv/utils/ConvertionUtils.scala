@@ -18,7 +18,7 @@ trait ConvertionUtils {
    * @param bedFile RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
    * @return Map of (chr, (regionId, start end)) optimized for calculating coverage.
    */
-  def bedFileToRegionsMap(bedFile: RDD[(Int, (Int, Int, Int))]): mutable.HashMap[Int, Array[ArrayBuffer[(Int, Int, Int)]]] = {
+  def bedFileToChromosomesMap(bedFile: RDD[(Int, (Int, Int, Int))]): mutable.HashMap[Int, Array[ArrayBuffer[(Int, Int, Int)]]] = {
     val result = new mutable.HashMap[Int, Array[ArrayBuffer[(Int, Int, Int)]]]
     for ((regionId, (chr, start, end)) <- bedFile.collect) {
       if (!result.contains(chr))
@@ -27,6 +27,21 @@ trait ConvertionUtils {
       if (result(chr)(startId) == null)
         result(chr)(startId) = new ArrayBuffer[(Int, Int, Int)]
       result(chr)(startId) += ((regionId, start, end))
+    }
+    result
+  }
+
+  /**
+   * Method for converting data from BED file into map of region's lengths.
+   *
+   * @param bedFile RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
+   * @return Map of (regionId, length) containing lengths of given regions.
+   */
+  def bedFileToRegionLengths(bedFile: RDD[(Int, (Int, Int, Int))]): mutable.HashMap[Int, Int] = {
+    val result = new mutable.HashMap[Int, Int]
+    bedFile.collect foreach {
+      case (regionId, (_, start, end)) =>
+        result(regionId) = (end - start)
     }
     result
   }

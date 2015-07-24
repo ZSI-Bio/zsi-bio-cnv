@@ -27,8 +27,8 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (Int, Int,
    * Map of (chr, (regionId, start, end)) optimized for searching by chromosome and position.
    * It is spread among all of the nodes for quick access.
    */
-  private val regionsMap: Broadcast[mutable.HashMap[Int, Array[ArrayBuffer[(Int, Int, Int)]]]] = sc.broadcast {
-    bedFileToRegionsMap(bedFile)
+  private val chromosomesMap: Broadcast[mutable.HashMap[Int, Array[ArrayBuffer[(Int, Int, Int)]]]] = sc.broadcast {
+    bedFileToChromosomesMap(bedFile)
   }
 
   /**
@@ -42,8 +42,8 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (Int, Int,
       val regionsCountMap = new mutable.HashMap[Long, Int]
 
       for ((sampleId, read) <- partition)
-        if (regionsMap.value.contains(chrStrToInt(read.getReferenceName))) {
-          val regions = regionsMap.value(chrStrToInt(read.getReferenceName))
+        if (chromosomesMap.value.contains(chrStrToInt(read.getReferenceName))) {
+          val regions = chromosomesMap.value(chrStrToInt(read.getReferenceName))
           val bases = genBases(read)
           for ((baseStart, baseEnd) <- bases) {
             val regionsToCheck = getRegionsToCheck(baseStart, regions)
