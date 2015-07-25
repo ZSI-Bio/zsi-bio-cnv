@@ -31,6 +31,14 @@ trait ConvertionUtils {
     result
   }
 
+  def bedFileToRegionsMap(bedFile: RDD[(Int, (Int, Int, Int))]): mutable.HashMap[Int, Int] = {
+    val result = new mutable.HashMap[Int, Int]
+    for ((regionId, (chr, _, _)) <- bedFile.collect) {
+      result(regionId) = chr
+    }
+    result
+  }
+
   /**
    * Method for converting data from BED file into map of region's lengths.
    *

@@ -18,50 +18,32 @@ object Test {
     val bamFilesPath = "/Users/mariusz-macbook/Downloads/ZSI-Bio/Tools/conifer_v0.2.2/exomes_data"
 
     val start = System.currentTimeMillis
-
     val conifer = new Conifer(sc, bedFilePath, bamFilesPath)
     val loadingTime = System.currentTimeMillis
 
     val coverage = conifer.coverage
+    saveCoverage(coverage)
     val coverageTime = System.currentTimeMillis
 
     val rpkms = conifer.rpkms(coverage)
+    saveRpkms(rpkms)
     val rpkmTime = System.currentTimeMillis
 
     val zrpkms = conifer.zrpkms(rpkms)
+    saveZrpkms(zrpkms)
     val zrpkmTime = System.currentTimeMillis
 
-    conifer.calculateSVD(zrpkms)
+    conifer.svd(zrpkms)
     val svdTime = System.currentTimeMillis
 
     System.console().printf(
       "Loading: " + (loadingTime - start) + " ms\n" +
-      "Coverage: " + (coverageTime - loadingTime) + " ms\n" +
-      "RPKM: " + (rpkmTime - coverageTime) + " ms\n" +
-      "ZRPKM: " + (zrpkmTime - rpkmTime) + " ms\n" +
-      "SVD: " + (svdTime - zrpkmTime) + " ms\n"
+        "Coverage: " + (coverageTime - loadingTime) + " ms\n" +
+        "RPKM: " + (rpkmTime - coverageTime) + " ms\n" +
+        "ZRPKM: " + (zrpkmTime - rpkmTime) + " ms\n" +
+        "SVD: " + (svdTime - zrpkmTime) + " ms\n"
     )
 
-    //    saveBedFile(conifer.bedFile.sortByKey())
-    //    saveCoverage(conifer.coverage.sortByKey())
-    //    saveRpkms(conifer.rpkms.sortByKey())
-    //    saveZrpkms(conifer.zrpkms.sortByKey())
-
-    //    System.console().printf("Samples: " + conifer.samples.size + "\n")
-    //    System.console().printf("Reads: " + conifer.reads.count + "\n")
-    //    System.console().printf("BED: " + conifer.bedFile.count + "\n")
-    //    System.console().printf("Coverage: " + conifer.coverage.count + "\n")
-    //    System.console().printf("RPKMS: " + conifer.rpkms.count + "\n")
-    //    System.console().printf("ZRPKMS: " + conifer.zrpkms.count + "\n")
-    //    System.console().printf("Matrix rows: " + mat.numRows + "\n")
-    //    System.console().printf("Matrix cols: " + mat.numCols + "\n")
-
-  }
-
-  private def saveBedFile(bedFile: RDD[(Int, (Int, Int, Int))]) = {
-    val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/results/bedFile.txt"
-    maybeRemoveDir(path)
-    bedFile.saveAsTextFile(path)
   }
 
   private def saveCoverage(coverage: RDD[(Int, Iterable[(Int, Int)])]) = {

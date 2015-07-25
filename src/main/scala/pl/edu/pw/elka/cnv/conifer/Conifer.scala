@@ -2,17 +2,12 @@ package pl.edu.pw.elka.cnv.conifer
 
 import htsjdk.samtools.SAMRecord
 import org.apache.spark.SparkContext
-import org.apache.spark.mllib.linalg
-import org.apache.spark.mllib.linalg.Vectors
-import org.apache.spark.mllib.linalg.distributed.RowMatrix
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.coverage.CoverageCounter
 import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
+import pl.edu.pw.elka.cnv.svd.SvdCounter
 import pl.edu.pw.elka.cnv.utils.{ConvertionUtils, FileUtils}
 import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
-
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
 /**
  * Main class for CoNIFER algorithm.
@@ -63,36 +58,9 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
     counter.calculateZrpkms
   }
 
-  def calculateSVD(zrpkms: RDD[(Int, Iterable[(Int, Double)])]) = {
-    val regionsMap = test(bedFile)
-    val svdMap = new mutable.HashMap[Int, ArrayBuffer[linalg.Vector]]
-
-    zrpkms.collect.foreach {
-      case (regionId, sampleZrpkms) =>
-        val row = sampleZrpkms.toArray.sorted
-        val ind = regionsMap(regionId)
-        if (!svdMap.contains(ind))
-          svdMap(ind) = new ArrayBuffer[linalg.Vector]
-        svdMap(ind) += Vectors.dense(row.map(_._2))
-    }
-
-//    val result = svdMap map {
-//      case (chr, rows) =>
-//        new RowMatrix(sc.makeRDD(rows)).computeSVD(samples.size)
-//    } map (_.s.toArray.mkString("\t")) map (_.mkString("\n"))
-//
-//    System.console().printf(result + "\n")
-    //val newS = removeComponents(svd.s)
-    //svd.U.multiply(Matrices.diag(newS)).multiply(svd.V)
-  }
-
-
-  private def test(bedFile: RDD[(Int, (Int, Int, Int))]) = {
-    val result = new mutable.HashMap[Int, Int]
-    for ((regionId, (chr, _, _)) <- bedFile.collect) {
-      result(regionId) = chr
-    }
-    result
+  def svd(zrpkms: RDD[(Int, Iterable[(Int, Double)])]) = {
+    val counter = new SvdCounter(sc, samples, bedFile, zrpkms)
+    counter.calculateSvd
   }
 
   //  private def removeComponents(vec: org.apache.spark.mllib.linalg.Vector): org.apache.spark.mllib.linalg.Vector = {
