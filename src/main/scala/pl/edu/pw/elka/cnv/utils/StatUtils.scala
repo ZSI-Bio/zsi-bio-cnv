@@ -51,11 +51,24 @@ trait StatUtils {
   def zrpkm(rpkm: Double, median: Double, stddev: Double): Double =
     return (rpkm - median) / stddev
 
-  def blackman(m: Int): Array[Double] = {
+  def blackman(m: Int): Seq[Double] = {
     val d = 2 * math.Pi / (m - 1)
     (0 until m) map {
       n => 0.42 - 0.5 * math.cos(n * d) + 0.08 * math.cos(2 * n * d)
-    } toArray
+    }
+  }
+
+  def convolve(v1: Seq[Double], v2: Seq[Double]): Seq[Double] = {
+    val n1 = v1.size
+    val n2 = v2.size
+    (0 until n1 + n2 - 1) map {
+      n =>
+        val kmin = math.max(0, n - n2 + 1)
+        val kmax = math.min(n1 - 1, n)
+        (kmin to kmax) map {
+          k => v1(k) * v2(n - k)
+        } sum
+    }
   }
 
 }
