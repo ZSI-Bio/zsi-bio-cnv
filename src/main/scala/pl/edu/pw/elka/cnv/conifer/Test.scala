@@ -36,12 +36,18 @@ object Test {
     conifer.svd(zrpkms)
     val svdTime = System.currentTimeMillis
 
+    //    System.console().printf(
+    //      "Loading: " + (loadingTime - start) + " ms\n" +
+    //        "Coverage: " + (coverageTime - loadingTime) + " ms\n" +
+    //        "RPKM: " + (rpkmTime - coverageTime) + " ms\n" +
+    //        "ZRPKM: " + (zrpkmTime - rpkmTime) + " ms\n" +
+    //        "SVD: " + (svdTime - zrpkmTime) + " ms\n"
+    //    )
+
     System.console().printf(
       "Loading: " + (loadingTime - start) + " ms\n" +
-        "Coverage: " + (coverageTime - loadingTime) + " ms\n" +
-        "RPKM: " + (rpkmTime - coverageTime) + " ms\n" +
-        "ZRPKM: " + (zrpkmTime - rpkmTime) + " ms\n" +
-        "SVD: " + (svdTime - zrpkmTime) + " ms\n"
+        "Coverage & RPKM: " + (rpkmTime - loadingTime) + " ms\n" +
+        "ZRPKM & SVD: " + (svdTime - rpkmTime) + " ms\n"
     )
 
   }

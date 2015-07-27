@@ -51,4 +51,11 @@ trait StatUtils {
   def zrpkm(rpkm: Double, median: Double, stddev: Double): Double =
     return (rpkm - median) / stddev
 
+  def blackman(m: Int): Array[Double] = {
+    val d = 2 * math.Pi / (m - 1)
+    (0 until m) map {
+      n => 0.42 - 0.5 * math.cos(n * d) + 0.08 * math.cos(2 * n * d)
+    } toArray
+  }
+
 }
