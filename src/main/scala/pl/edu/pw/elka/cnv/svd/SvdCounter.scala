@@ -3,8 +3,8 @@ package pl.edu.pw.elka.cnv.svd
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.linalg
-import org.apache.spark.mllib.linalg.Vectors
-import org.apache.spark.mllib.linalg.distributed.RowMatrix
+import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix}
+import org.apache.spark.mllib.linalg.{Matrices, Matrix, SingularValueDecomposition, Vectors}
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.utils.ConvertionUtils
 
@@ -14,7 +14,8 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * Created by mariusz-macbook on 25/07/15.
  */
-class SvdCounter(@transient sc: SparkContext, samples: Map[Int, String], bedFile: RDD[(Int, (Int, Int, Int))], zrpkms: RDD[(Int, Iterable[(Int, Double)])])
+class SvdCounter(@transient sc: SparkContext, samples: Map[Int, String], bedFile: RDD[(Int, (Int, Int, Int))], zrpkms: RDD[(Int, Iterable[(Int, Double)])],
+                 k: Int = 5, reduceWorkers: Int = 12)
   extends Serializable with ConvertionUtils {
 
   private val samplesCount: Int = samples.size
@@ -23,21 +24,37 @@ class SvdCounter(@transient sc: SparkContext, samples: Map[Int, String], bedFile
     bedFileToRegionsMap(bedFile)
   }
 
-  def calculateSvd =
+  def calculateSvd: Array[(Int, IndexedRowMatrix)] =
+    for {
+      (chr, rows) <- prepareRows.collect
+      matrix = new IndexedRowMatrix(sc.makeRDD(rows))
+      svd = matrix.computeSVD(samplesCount, true)
+      newMatrix = reconstructMatrix(svd)
+    } yield (chr, newMatrix)
+
+  private def prepareRows: RDD[(Int, ArrayBuffer[IndexedRow])] =
     zrpkms.mapPartitions(partition => {
-      val vectorsMap = new mutable.HashMap[Int, ArrayBuffer[linalg.Vector]]
+      val rowsMap = new mutable.HashMap[Int, ArrayBuffer[IndexedRow]]
 
       for ((regionId, sampleZrpkms) <- partition) {
         val chr = regionsMap.value(regionId)
-        if (!vectorsMap.contains(chr))
-          vectorsMap(chr) = new ArrayBuffer[linalg.Vector]
-        vectorsMap(chr) += Vectors.dense(sampleZrpkms.toArray.map(_._2))
+        if (!rowsMap.contains(chr))
+          rowsMap(chr) = new ArrayBuffer[IndexedRow]
+        rowsMap(chr) += new IndexedRow(regionId, Vectors.sparse(samplesCount, sampleZrpkms.toSeq))
       }
 
-      vectorsMap.iterator
-    }).reduceByKeyLocally(_ ++ _) map {
-      case (chr, rows) =>
-        new RowMatrix(sc.makeRDD(rows)).computeSVD(samplesCount)
-    } map (_.s.toArray.mkString("\t")) foreach (println)
+      rowsMap.iterator
+    }).reduceByKey(_ ++ _, reduceWorkers)
+
+  private def reconstructMatrix(svd: SingularValueDecomposition[IndexedRowMatrix, Matrix]): IndexedRowMatrix = {
+    val newS = removeComponents(svd.s)
+    svd.U.multiply(Matrices.diag(newS)).multiply(svd.V)
+  }
+
+  private def removeComponents(vec: linalg.Vector): linalg.Vector = {
+    val tmp = vec.toArray
+    (0 until k).foreach(tmp.update(_, 0.0))
+    Vectors.dense(tmp)
+  }
 
 }

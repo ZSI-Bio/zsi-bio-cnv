@@ -59,14 +59,8 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   }
 
   def svd(zrpkms: RDD[(Int, Iterable[(Int, Double)])]) = {
-    val counter = new SvdCounter(sc, samples, bedFile, zrpkms)
+    val counter = new SvdCounter(sc, samples, bedFile, zrpkms, 1)
     counter.calculateSvd
   }
-
-  //  private def removeComponents(vec: org.apache.spark.mllib.linalg.Vector): org.apache.spark.mllib.linalg.Vector = {
-  //    val tmp = vec.toArray
-  //    (0 until svd) map (tmp.update(_, 0))
-  //    Vectors.dense(tmp)
-  //  }
 
 }
