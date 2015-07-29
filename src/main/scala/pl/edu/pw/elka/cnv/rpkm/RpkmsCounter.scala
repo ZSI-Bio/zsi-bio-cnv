@@ -4,7 +4,7 @@ import htsjdk.samtools.SAMRecord
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import pl.edu.pw.elka.cnv.utils.{ConvertionUtils, StatUtils}
+import pl.edu.pw.elka.cnv.utils.{CNVUtils, ConvertionUtils}
 
 import scala.collection.mutable
 
@@ -16,7 +16,7 @@ import scala.collection.mutable
  * @param coverage RDD of (regionId, (sampleId, coverage)) containing coverage of given regions by given samples.
  */
 class RpkmsCounter(@transient sc: SparkContext, reads: RDD[(Int, SAMRecord)], bedFile: RDD[(Int, (Int, Int, Int))], coverage: RDD[(Int, Iterable[(Int, Int)])])
-  extends Serializable with ConvertionUtils with StatUtils {
+  extends Serializable with ConvertionUtils with CNVUtils {
 
   /**
    * Map of (sampleId, total) containing total number of reads in given samples.

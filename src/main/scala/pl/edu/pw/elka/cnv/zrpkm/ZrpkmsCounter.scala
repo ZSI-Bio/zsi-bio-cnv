@@ -1,7 +1,7 @@
 package pl.edu.pw.elka.cnv.zrpkm
 
 import org.apache.spark.rdd.RDD
-import pl.edu.pw.elka.cnv.utils.StatUtils
+import pl.edu.pw.elka.cnv.utils.{CNVUtils, StatUtils}
 
 import scala.collection.mutable
 
@@ -12,7 +12,7 @@ import scala.collection.mutable
  * @param minMedian Minimum value of median - regions with lower median of RPKM values are discarded.
  */
 class ZrpkmsCounter(samples: Map[Int, String], rpkms: RDD[(Int, Iterable[(Int, Double)])], minMedian: Double)
-  extends Serializable with StatUtils {
+  extends Serializable with CNVUtils with StatUtils {
 
   /**
    * Sample Ids
