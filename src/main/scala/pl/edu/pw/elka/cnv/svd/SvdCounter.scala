@@ -24,9 +24,9 @@ class SvdCounter(@transient sc: SparkContext, samples: Map[Int, String], bedFile
     bedFileToRegionsMap(bedFile)
   }
 
-  def calculateSvd: Array[(Int, IndexedRowMatrix)] =
+  def calculateSvd: RDD[(Int, IndexedRowMatrix)] =
     for {
-      (chr, rows) <- prepareRows.collect
+      (chr, rows) <- prepareRows
       matrix = new IndexedRowMatrix(sc.makeRDD(rows))
       svd = matrix.computeSVD(samplesCount, true)
       newMatrix = reconstructMatrix(svd)

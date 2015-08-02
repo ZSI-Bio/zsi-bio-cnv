@@ -2,6 +2,8 @@ package pl.edu.pw.elka.cnv.conifer
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.mllib.linalg.distributed.{IndexedRowMatrix, IndexedRow, CoordinateMatrix, MatrixEntry}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -33,21 +35,26 @@ object Test {
     saveZrpkms(zrpkms)
     val zrpkmTime = System.currentTimeMillis
 
-    conifer.svd(zrpkms)
+    val matrices = conifer.svd(zrpkms)
     val svdTime = System.currentTimeMillis
 
-    //    System.console().printf(
-    //      "Loading: " + (loadingTime - start) + " ms\n" +
-    //        "Coverage: " + (coverageTime - loadingTime) + " ms\n" +
-    //        "RPKM: " + (rpkmTime - coverageTime) + " ms\n" +
-    //        "ZRPKM: " + (zrpkmTime - rpkmTime) + " ms\n" +
-    //        "SVD: " + (svdTime - zrpkmTime) + " ms\n"
-    //    )
+    conifer.call(matrices)
+    val callTime = System.currentTimeMillis
+
+    System.console().printf(
+      "Loading: " + (loadingTime - start) + " ms\n" +
+        "Coverage: " + (coverageTime - loadingTime) + " ms\n" +
+        "RPKM: " + (rpkmTime - coverageTime) + " ms\n" +
+        "ZRPKM: " + (zrpkmTime - rpkmTime) + " ms\n" +
+        "SVD: " + (svdTime - zrpkmTime) + " ms\n" +
+        "Calling: " + (callTime - svdTime) + " ms\n"
+    )
 
     System.console().printf(
       "Loading: " + (loadingTime - start) + " ms\n" +
         "Coverage & RPKM: " + (rpkmTime - loadingTime) + " ms\n" +
-        "ZRPKM & SVD: " + (svdTime - rpkmTime) + " ms\n"
+        "ZRPKM & SVD: " + (svdTime - rpkmTime) + " ms\n" +
+        "Calling: " + (callTime - svdTime) + " ms\n"
     )
 
   }
