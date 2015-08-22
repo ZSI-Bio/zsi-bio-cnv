@@ -2,11 +2,12 @@ package pl.edu.pw.elka.cnv.conifer
 
 import htsjdk.samtools.SAMRecord
 import org.apache.spark.SparkContext
+import org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.coverage.CoverageCounter
 import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
 import pl.edu.pw.elka.cnv.svd.SvdCounter
-import pl.edu.pw.elka.cnv.utils.{ConvertionUtils, FileUtils}
+import pl.edu.pw.elka.cnv.utils.{CNVUtils, ConvertionUtils, FileUtils, StatUtils}
 import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
 
 /**
@@ -17,7 +18,7 @@ import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
  * @param bamFilesPath Path to folder containing BAM files.
  */
 class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String, minMedian: Double = 1.0, svd: Int = 12)
-  extends Serializable with FileUtils with ConvertionUtils {
+  extends Serializable with ConvertionUtils with CNVUtils with FileUtils with StatUtils {
 
   /**
    * Map of (sampleId, samplePath) containing all of the found BAM files.
@@ -58,9 +59,17 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
     counter.calculateZrpkms
   }
 
-  def svd(zrpkms: RDD[(Int, Iterable[(Int, Double)])]) = {
+  def svd(zrpkms: RDD[(Int, Iterable[(Int, Double)])]): Array[(Int, IndexedRowMatrix)] = {
     val counter = new SvdCounter(sc, samples, bedFile, zrpkms, 1)
     counter.calculateSvd
   }
+
+  def call(matrices: Array[(Int, IndexedRowMatrix)]) =
+    sc.parallelize {
+      for {
+        (chr, matrix) <- matrices
+        rows = matrix.rows.sortBy(_.index).map(_.vector.toArray)
+      } yield (chr, rows.collect)
+    }
 
 }
