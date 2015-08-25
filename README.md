@@ -73,3 +73,73 @@ object Example extends Application with ConvertionUtils with FileUtils {
 
 }
 ```
+
+3. Calculating ZRPKM values:
+```scala
+import pl.edu.pw.elka.cnv.coverage.CoverageCounter
+import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
+import pl.edu.pw.elka.cnv.utils.ConvertionUtils
+import pl.edu.pw.elka.cnv.utils.FileUtils
+import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
+
+object Example extends Application with ConvertionUtils with FileUtils {
+
+    val samples = scanForSamples("path/to/bam/files")
+    val reads = loadReads(sc, samples)
+    val bedFile = readBedFile(sc, "path/to/bed/file")
+
+    val coverage = {
+        val counter = new CoverageCounter(sc, bedFile, reads)
+        coverageToRegionCoverage(counter.calculateCoverage)
+    }
+
+    val rpkms = {
+        val counter = new RpkmsCounter(reads, bedFile, coverage)
+        counter.calculateRpkms
+    }
+
+    val zrpkms = {
+        val counter = new ZrpkmsCounter(samples, rpkms, 1.0)
+        counter.calculateZrpkms
+    }
+
+}
+```
+
+4. Calculating SVD decomposition:
+```scala
+import pl.edu.pw.elka.cnv.coverage.CoverageCounter
+import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
+import pl.edu.pw.elka.cnv.svd.SvdCounter
+import pl.edu.pw.elka.cnv.utils.ConvertionUtils
+import pl.edu.pw.elka.cnv.utils.FileUtils
+import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
+
+object Example extends Application with ConvertionUtils with FileUtils {
+
+    val samples = scanForSamples("path/to/bam/files")
+    val reads = loadReads(sc, samples)
+    val bedFile = readBedFile(sc, "path/to/bed/file")
+
+    val coverage = {
+        val counter = new CoverageCounter(sc, bedFile, reads)
+        coverageToRegionCoverage(counter.calculateCoverage)
+    }
+
+    val rpkms = {
+        val counter = new RpkmsCounter(reads, bedFile, coverage)
+        counter.calculateRpkms
+    }
+
+    val zrpkms = {
+        val counter = new ZrpkmsCounter(samples, rpkms, 1.0)
+        counter.calculateZrpkms
+    }
+
+    val svd = {
+        val counter = new SvdCounter(sc, samples, bedFile, zrpkms, 12)
+        counter.calculateSvd
+    }
+
+}
+```

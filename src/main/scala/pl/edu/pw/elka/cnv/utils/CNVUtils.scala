@@ -5,6 +5,8 @@ import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix}
 
 /**
  * Created by mariusz-macbook on 29/07/15.
+ *
+ * Trait containing common CNV detection methods.
  */
 trait CNVUtils {
 
@@ -30,6 +32,7 @@ trait CNVUtils {
   def zrpkm(rpkm: Double, median: Double, stddev: Double): Double =
     (rpkm - median) / stddev
 
+  //TODO
   def smooth(matrix: IndexedRowMatrix, window: Int): IndexedRowMatrix =
     if (window <= 0) matrix
     else {
@@ -41,6 +44,7 @@ trait CNVUtils {
       transpose(new IndexedRowMatrix(newRows))
     }
 
+  //TODO
   def blackman(window: Int): Seq[Double] = {
     val d = 2 * math.Pi / (window - 1)
     val values = (0 until window) map {
@@ -49,6 +53,7 @@ trait CNVUtils {
     values.map(_ / values.sum)
   }
 
+  //TODO
   def convolve(v1: Seq[Double], v2: Seq[Double]): Seq[Double] = {
     val (n1, n2) = (v1.size, v2.size)
     (0 until n1 + n2 - 1) map { n =>
@@ -58,6 +63,7 @@ trait CNVUtils {
     } drop ((n2 - 1) / 2) dropRight ((n2 - 1) / 2)
   }
 
+  //TODO
   def transpose(matrix: IndexedRowMatrix): IndexedRowMatrix =
     matrix.toCoordinateMatrix.transpose.toIndexedRowMatrix
 

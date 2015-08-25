@@ -8,8 +8,6 @@ import pl.edu.pw.elka.cnv.SparkFunSuite
  */
 class ZrpkmsCounterFunSuite extends SparkFunSuite with Matchers {
 
-  sparkTest("calculateZrpkms test") {
-    //TODO
-  }
+  //TODO
 
 }

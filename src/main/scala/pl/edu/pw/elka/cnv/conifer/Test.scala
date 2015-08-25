@@ -2,8 +2,7 @@ package pl.edu.pw.elka.cnv.conifer
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.mllib.linalg.Vectors
-import org.apache.spark.mllib.linalg.distributed.{IndexedRowMatrix, IndexedRow, CoordinateMatrix, MatrixEntry}
+import org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -20,7 +19,7 @@ object Test {
     val bamFilesPath = "/Users/mariusz-macbook/Downloads/ZSI-Bio/Tools/conifer_v0.2.2/exomes_data"
 
     val start = System.currentTimeMillis
-    val conifer = new Conifer(sc, bedFilePath, bamFilesPath)
+    val conifer = new Conifer(sc, bedFilePath, bamFilesPath, 1.0, 1)
     val loadingTime = System.currentTimeMillis
 
     val coverage = conifer.coverage

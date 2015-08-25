@@ -16,6 +16,8 @@ import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
  * @param sc Apache Spark context.
  * @param bedFilePath Path to folder containing BED file.
  * @param bamFilesPath Path to folder containing BAM files.
+ * @param minMedian Minimum population median RPKM per probe (default value - 1.0).
+ * @param svd Number of components to remove (default value - 12).
  */
 class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String, minMedian: Double = 1.0, svd: Int = 12)
   extends Serializable with ConvertionUtils with CNVUtils with FileUtils with StatUtils {
@@ -36,7 +38,9 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   private val bedFile: RDD[(Int, (Int, Int, Int))] = readBedFile(sc, bedFilePath)
 
   /**
-   * RDD of (regionId, (sampleId, coverage)) containing coverage.
+   * Method for calculation of coverage.
+   *
+   * @return RDD of (regionId, (sampleId, coverage)) containing calculated coverage.
    */
   def coverage: RDD[(Int, Iterable[(Int, Int)])] = {
     val counter = new CoverageCounter(sc, bedFile, reads)
@@ -44,7 +48,10 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   }
 
   /**
-   * RDD of (regionId, (sampleId, rpkm)) containing RPKM values.
+   * Method for calculation of RPKM values.
+   *
+   * @param coverage RDD of (regionId, (sampleId, coverage)) containing coverage.
+   * @return RDD of (regionId, (sampleId, rpkm)) containing calculated RPKM values.
    */
   def rpkms(coverage: RDD[(Int, Iterable[(Int, Int)])]): RDD[(Int, Iterable[(Int, Double)])] = {
     val counter = new RpkmsCounter(sc, reads, bedFile, coverage)
@@ -52,18 +59,28 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   }
 
   /**
-   * RDD of (regionId, (sampleId, zrpkm)) containing ZRPKM values.
+   * Method for calculation of ZRPKM values.
+   *
+   * @param rpkms RDD of (regionId, (sampleId, rpkm)) containing RPKM values.
+   * @return RDD of (regionId, (sampleId, zrpkm)) containing calculated ZRPKM values.
    */
   def zrpkms(rpkms: RDD[(Int, Iterable[(Int, Double)])]): RDD[(Int, Iterable[(Int, Double)])] = {
     val counter = new ZrpkmsCounter(samples, rpkms, minMedian)
     counter.calculateZrpkms
   }
 
+  /**
+   * Method for calculation of SVD decomposition.
+   *
+   * @param zrpkms RDD of (regionId, (sampleId, zrpkm)) containing ZRPKM values.
+   * @return Array of (chr, matrix) containing matrices after SVD decomposition.
+   */
   def svd(zrpkms: RDD[(Int, Iterable[(Int, Double)])]): Array[(Int, IndexedRowMatrix)] = {
-    val counter = new SvdCounter(sc, samples, bedFile, zrpkms, 1)
+    val counter = new SvdCounter(sc, samples, bedFile, zrpkms, svd)
     counter.calculateSvd
   }
 
+  //TODO
   def call(matrices: Array[(Int, IndexedRowMatrix)]) = {}
 
 }

@@ -8,8 +8,6 @@ import pl.edu.pw.elka.cnv.SparkFunSuite
  */
 class CoverageCounterFunSuite extends SparkFunSuite with Matchers {
 
-  sparkTest("calculateCoverage test") {
-    //TODO
-  }
+  //TODO
 
 }

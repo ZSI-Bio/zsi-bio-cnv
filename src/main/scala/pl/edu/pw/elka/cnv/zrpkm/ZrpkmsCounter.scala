@@ -8,6 +8,7 @@ import scala.collection.mutable
 /**
  * Main class for calculation of ZRPKM values.
  *
+ * @param samples Map of (sampleId, samplePath) containing all of the BAM files.
  * @param rpkms RDD of (regionId, (sampleId, rpkm)) containing RPKM values for given regions and samples.
  * @param minMedian Minimum value of median - regions with lower median of RPKM values are discarded.
  */
@@ -40,7 +41,8 @@ class ZrpkmsCounter(samples: Map[Int, String], rpkms: RDD[(Int, Iterable[(Int, D
   /**
    * Method that puts zeros in place of no RPKM value.
    *
-   * @return Sequence of (sampleId, rpkm) containing RPKM values for given samples.
+   * @param sampleRpkms Iterable of (sampleId, rpkm) containing RPKM values for given samples.
+   * @return Sequence of (sampleId, rpkm) containing RPKM values for all samples.
    */
   private def fillWithZeros(sampleRpkms: Iterable[(Int, Double)]): Seq[(Int, Double)] = {
     val result = new mutable.HashMap[Int, Double]
