@@ -64,12 +64,6 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
     counter.calculateSvd
   }
 
-  def call(matrices: Array[(Int, IndexedRowMatrix)]) =
-    sc.parallelize {
-      for {
-        (chr, matrix) <- matrices
-        rows = matrix.rows.sortBy(_.index).map(_.vector.toArray)
-      } yield (chr, rows.collect)
-    }
+  def call(matrices: Array[(Int, IndexedRowMatrix)]) = {}
 
 }

@@ -36,6 +36,9 @@ object Test {
     val zrpkmTime = System.currentTimeMillis
 
     val matrices = conifer.svd(zrpkms)
+    matrices.foreach {
+      case (chr, matrix) => saveMatrix(chr, matrix)
+    }
     val svdTime = System.currentTimeMillis
 
     conifer.call(matrices)
@@ -75,6 +78,12 @@ object Test {
     val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/results/zrpkms.txt"
     maybeRemoveDir(path)
     zrpkms.saveAsTextFile(path)
+  }
+
+  private def saveMatrix(chr: Int, matrix: IndexedRowMatrix) = {
+    val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/results/matrix" + chr + ".txt"
+    maybeRemoveDir(path)
+    matrix.rows.saveAsTextFile(path)
   }
 
   private def maybeRemoveDir(path: String) = {
