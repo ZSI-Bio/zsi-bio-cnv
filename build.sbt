@@ -8,6 +8,7 @@ libraryDependencies ++= Seq(
   "org.scalatest" % "scalatest_2.10" % "2.2.4" % "test",
   "org.apache.spark" % "spark-core_2.10" % "1.4.1",
   "org.apache.spark" % "spark-mllib_2.10" % "1.4.1",
+  "org.apache.commons" % "commons-math3" % "3.5",
   "org.seqdoop" % "hadoop-bam" % "7.0.0"
 )
 

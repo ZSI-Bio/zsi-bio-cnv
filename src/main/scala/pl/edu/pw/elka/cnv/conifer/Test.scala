@@ -1,8 +1,8 @@
 package pl.edu.pw.elka.cnv.conifer
 
+import org.apache.commons.math3.linear.RealMatrix
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -35,9 +35,7 @@ object Test {
     val zrpkmTime = System.currentTimeMillis
 
     val matrices = conifer.svd(zrpkms)
-    matrices.foreach {
-      case (chr, matrix) => saveMatrix(chr, matrix)
-    }
+    saveMatrices(matrices)
     val svdTime = System.currentTimeMillis
 
     conifer.call(matrices)
@@ -79,10 +77,10 @@ object Test {
     zrpkms.saveAsTextFile(path)
   }
 
-  private def saveMatrix(chr: Int, matrix: IndexedRowMatrix) = {
-    val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/results/matrix" + chr + ".txt"
+  private def saveMatrices(matrices: RDD[(Int, RealMatrix)]) = {
+    val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/results/matrices.txt"
     maybeRemoveDir(path)
-    matrix.rows.saveAsTextFile(path)
+    matrices.saveAsTextFile(path)
   }
 
   private def maybeRemoveDir(path: String) = {

@@ -1,6 +1,7 @@
 package pl.edu.pw.elka.cnv.conifer
 
 import htsjdk.samtools.SAMRecord
+import org.apache.commons.math3.linear.RealMatrix
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix
 import org.apache.spark.rdd.RDD
@@ -73,14 +74,14 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    * Method for calculation of SVD decomposition.
    *
    * @param zrpkms RDD of (regionId, (sampleId, zrpkm)) containing ZRPKM values.
-   * @return Array of (chr, matrix) containing matrices after SVD decomposition.
+   * @return RDD of (chr, matrix) containing matrices after SVD decomposition.
    */
-  def svd(zrpkms: RDD[(Int, Iterable[(Int, Double)])]): Array[(Int, IndexedRowMatrix)] = {
-    val counter = new SvdCounter(sc, samples, bedFile, zrpkms, svd)
+  def svd(zrpkms: RDD[(Int, Iterable[(Int, Double)])]): RDD[(Int, RealMatrix)] = {
+    val counter = new SvdCounter(sc, bedFile, zrpkms, svd)
     counter.calculateSvd
   }
 
   //TODO
-  def call(matrices: Array[(Int, IndexedRowMatrix)]) = {}
+  def call(matrices: RDD[(Int, RealMatrix)]) = {}
 
 }
