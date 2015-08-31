@@ -3,8 +3,8 @@ package pl.edu.pw.elka.cnv.conifer
 import htsjdk.samtools.SAMRecord
 import org.apache.commons.math3.linear.RealMatrix
 import org.apache.spark.SparkContext
-import org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix
 import org.apache.spark.rdd.RDD
+import pl.edu.pw.elka.cnv.caller.Caller
 import pl.edu.pw.elka.cnv.coverage.CoverageCounter
 import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
 import pl.edu.pw.elka.cnv.svd.SvdCounter
@@ -19,8 +19,9 @@ import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
  * @param bamFilesPath Path to folder containing BAM files.
  * @param minMedian Minimum population median RPKM per probe (default value - 1.0).
  * @param svd Number of components to remove (default value - 12).
+ * @param threshold +/- threshold for calling (minimum SVD-ZRPKM) (default value - 1.5).
  */
-class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String, minMedian: Double = 1.0, svd: Int = 12)
+class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String, minMedian: Double = 1.0, svd: Int = 12, threshold: Double = 1.5)
   extends Serializable with ConvertionUtils with CNVUtils with FileUtils with StatUtils {
 
   /**
@@ -81,7 +82,16 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
     counter.calculateSvd
   }
 
-  //TODO
-  def call(matrices: RDD[(Int, RealMatrix)]) = {}
+  /**
+   * Method for making calls.
+   *
+   * @param matrices RDD of (chr, matrix) containing matrices after SVD decomposition.
+   * @return RDD of (chr, (sampleId, start, stop, state) containing detected CNV mutations.
+   */
+  def call(matrices: RDD[(Int, RealMatrix)]): RDD[(Int, Array[(Int, Int, Int, String)])] =
+    for {
+      (chr, matrix) <- matrices
+      caller = new Caller(matrix, threshold)
+    } yield (chr, caller.call)
 
 }
