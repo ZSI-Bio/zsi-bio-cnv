@@ -11,21 +11,21 @@ class StatUtilsFunSuite extends SparkFunSuite with Matchers {
   val stats = new StatUtils with Serializable
 
   test("mean test") {
-    stats.mean(Seq(0.0, 0.0, 0.0)) should be(0.0)
-    stats.mean(Seq(3.0, 2.0, 1.0)) should be(2.0)
-    stats.mean(Seq(2.1, 1.4, 3.7)) should be(2.4)
+    stats.mean(Array(0.0, 0.0, 0.0)) should be(0.0)
+    stats.mean(Array(3.0, 2.0, 1.0)) should be(2.0)
+    stats.mean(Array(2.1, 1.4, 3.7)) should be(2.4)
   }
 
   test("stddev test") {
-    stats.stddev(Seq(0.0, 0.0, 0.0)) should be(0.0)
-    stats.stddev(Seq(5.523, 83.273, 40.925)) should be(31.78349887738744)
-    stats.stddev(Seq(264.3, 734.96, 582.284)) should be(196.05685706844216)
+    stats.stddev(Array(0.0, 0.0, 0.0)) should be(0.0)
+    stats.stddev(Array(5.523, 83.273, 40.925)) should be(31.78349887738744)
+    stats.stddev(Array(264.3, 734.96, 582.284)) should be(196.05685706844216)
   }
 
   test("median test") {
-    stats.median(Seq(1.0)) should be(1.0)
-    stats.median(Seq(2.0, 1.0)) should be(1.5)
-    stats.median(Seq(2.0, 1.0, 3.0)) should be(2.0)
+    stats.median(Array(1.0)) should be(1.0)
+    stats.median(Array(2.0, 1.0)) should be(1.5)
+    stats.median(Array(2.0, 1.0, 3.0)) should be(2.0)
   }
 
 }
