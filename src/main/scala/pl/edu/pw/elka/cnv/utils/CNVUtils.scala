@@ -1,8 +1,5 @@
 package pl.edu.pw.elka.cnv.utils
 
-import org.apache.spark.mllib.linalg.Vectors
-import org.apache.spark.mllib.linalg.distributed.{IndexedRow, IndexedRowMatrix}
-
 /**
  * Created by mariusz-macbook on 29/07/15.
  *
@@ -32,39 +29,33 @@ trait CNVUtils {
   def zrpkm(rpkm: Double, median: Double, stddev: Double): Double =
     (rpkm - median) / stddev
 
-  //TODO
-  def smooth(matrix: IndexedRowMatrix, window: Int): IndexedRowMatrix =
-    if (window <= 0) matrix
-    else {
-      val newRows = for {
-        row <- transpose(matrix).rows
-        weightings = blackman(window)
-        smoothed = convolve(row.vector.toArray, weightings)
-      } yield new IndexedRow(row.index, Vectors.dense(smoothed.toArray))
-      transpose(new IndexedRowMatrix(newRows))
-    }
-
-  //TODO
-  def blackman(window: Int): Seq[Double] = {
+  /**
+   * Method for calculation of Blackman window.
+   *
+   * @param window Number of points in the output window.
+   * @return Blackman window.
+   */
+  def blackman(window: Int): Array[Double] = {
     val d = 2 * math.Pi / (window - 1)
-    val values = (0 until window) map {
+    (0 until window) map {
       n => 0.42 - 0.5 * math.cos(n * d) + 0.08 * math.cos(2 * n * d)
-    }
-    values.map(_ / values.sum)
+    } toArray
   }
 
-  //TODO
-  def convolve(v1: Seq[Double], v2: Seq[Double]): Seq[Double] = {
+  /**
+   * Method for calculation of discrete, linear convolution of two one-dimensional arrays.
+   *
+   * @param v1 First one-dimensional input array.
+   * @param v2 Second one-dimensional input array.
+   * @return Convolution of given arrays.
+   */
+  def convolve(v1: Array[Double], v2: Array[Double]): Array[Double] = {
     val (n1, n2) = (v1.size, v2.size)
     (0 until n1 + n2 - 1) map { n =>
       val kMin = math.max(0, n - n2 + 1)
       val kMax = math.min(n1 - 1, n)
       (kMin to kMax).map(k => v1(k) * v2(n - k)).sum
-    } drop ((n2 - 1) / 2) dropRight ((n2 - 1) / 2)
+    } toArray
   }
-
-  //TODO
-  def transpose(matrix: IndexedRowMatrix): IndexedRowMatrix =
-    matrix.toCoordinateMatrix.transpose.toIndexedRowMatrix
 
 }
