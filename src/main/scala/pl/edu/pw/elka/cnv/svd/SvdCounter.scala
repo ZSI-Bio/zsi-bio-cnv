@@ -39,7 +39,7 @@ class SvdCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (Int, Int, Int)
   def calculateSvd: RDD[(Int, RealMatrix)] =
     for {
       (chr, rows) <- prepareRows
-      matrix = new BlockRealMatrix(rows.toArray)
+      matrix = new BlockRealMatrix(rows.toArray.sortBy(_._1).map(_._2))
       svd = new linear.SingularValueDecomposition(matrix)
       newMatrix = reconstructMatrix(svd)
     } yield (chr, newMatrix)
@@ -49,15 +49,15 @@ class SvdCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (Int, Int, Int)
    *
    * @return RDD of (chr, rows) containing rows for matrices of given chromosomes.
    */
-  private def prepareRows: RDD[(Int, ArrayBuffer[Array[Double]])] =
+  private def prepareRows: RDD[(Int, ArrayBuffer[(Int, Array[Double])])] =
     zrpkms.mapPartitions(partition => {
-      val rowsMap = new mutable.HashMap[Int, ArrayBuffer[Array[Double]]]
+      val rowsMap = new mutable.HashMap[Int, ArrayBuffer[(Int, Array[Double])]]
 
       for ((regionId, sampleZrpkms) <- partition) {
         val chr = regionChromosomes.value(regionId)
         if (!rowsMap.contains(chr))
-          rowsMap(chr) = new ArrayBuffer[Array[Double]]
-        rowsMap(chr) += sampleZrpkms.toArray.sorted.map(_._2)
+          rowsMap(chr) = new ArrayBuffer[(Int, Array[Double])]
+        rowsMap(chr) += ((regionId, sampleZrpkms.toArray.sortBy(_._1).map(_._2)))
       }
 
       rowsMap.iterator
