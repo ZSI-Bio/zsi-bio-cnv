@@ -86,12 +86,13 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    * Method for making calls.
    *
    * @param matrices RDD of (chr, matrix) containing matrices after SVD decomposition.
-   * @return RDD of (chr, (sampleId, start, stop, state) containing detected CNV mutations.
+   * @return RDD of (sampleId, chr, start, stop, state) containing detected CNV mutations.
    */
-  def call(matrices: RDD[(Int, RealMatrix)]): RDD[(Int, Array[(Int, Int, Int, String)])] =
+  def call(matrices: RDD[(Int, RealMatrix)]): RDD[(Int, Int, Int, Int, String)] =
     for {
       (chr, matrix) <- matrices
       caller = new Caller(matrix, threshold)
-    } yield (chr, caller.call)
+      (sampleId, start, stop, state) <- caller.call
+    } yield (sampleId, chr, start, stop, state)
 
 }

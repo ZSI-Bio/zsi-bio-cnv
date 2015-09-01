@@ -84,7 +84,7 @@ object Test {
     matrices.saveAsTextFile(path)
   }
 
-  private def saveCalls(calls: RDD[(Int, Array[(Int, Int, Int, String)])]) = {
+  private def saveCalls(calls: RDD[(Int, Int, Int, Int, String)]) = {
     val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/results/calls.txt"
     maybeRemoveDir(path)
     calls.saveAsTextFile(path)
