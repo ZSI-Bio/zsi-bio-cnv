@@ -85,19 +85,20 @@ class Caller(matrix: RealMatrix, threshold: Double) extends Serializable with CN
     }
   }
 
-  private def mergeCalls(calls: Array[(Int, Int, String)]): Array[(Int, Int, String)] = {
+  private def mergeCalls(calls: Array[(Int, Int, String)]): List[(Int, Int, String)] = {
 
-    def recursion(pStart: Int, pStop: Int, pCalls: List[(Int, Int, String)]): List[(Int, Int, String)] = {
+    def merge(pStart: Int, pStop: Int, pCalls: List[(Int, Int, String)]): List[(Int, Int, String)] =
       pCalls match {
         case Nil => List()
         case (start, stop, state) :: xs =>
-          if (start <= pStop) recursion(pStart, math.max(stop, pStop), xs)
-          else (pStart, pStop, state) :: recursion(start, stop, xs)
+          if (start <= pStop) merge(pStart, math.max(stop, pStop), xs)
+          else (pStart, pStop, state) :: merge(start, stop, xs)
       }
-    }
 
-    val sorted = calls.sortBy(_._1).toList
-    recursion(sorted.head._1, sorted.head._2, sorted).toArray
+    calls.sortBy(_._1).toList match {
+      case Nil => List()
+      case x :: xs => merge(x._1, x._2, x :: xs)
+    }
   }
 
 }
