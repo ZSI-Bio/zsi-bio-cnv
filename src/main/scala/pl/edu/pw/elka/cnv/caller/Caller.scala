@@ -95,7 +95,7 @@ class Caller(matrix: RealMatrix, threshold: Double) extends Serializable with CN
           else (pStart, pStop, state) :: merge(start, stop, xs)
       }
 
-    calls.sortBy(_._1).toList match {
+    calls.sorted.toList match {
       case Nil => List()
       case x :: xs => merge(x._1, x._2, x :: xs)
     }
