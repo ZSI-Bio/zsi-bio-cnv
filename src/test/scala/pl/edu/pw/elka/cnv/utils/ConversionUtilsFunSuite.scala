@@ -61,6 +61,22 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
     output(179177) should be(47116753 - 47115835)
   }
 
+  test("bedFileToRegionCoords test") {
+    val input = Array(
+      (2429, 1, 19203909, 19204106),
+      (101874, 10, 113928069, 113928282),
+      (179177, 20, 47115835, 47116753))
+
+    val output = convertions.bedFileToRegionCoords(input)
+
+    output.keys should have size (3)
+
+    output.keys should contain theSameElementsAs Array(2429, 101874, 179177)
+    output(2429) should be((19203909, 19204106))
+    output(101874) should be((113928069, 113928282))
+    output(179177) should be((47115835, 47116753))
+  }
+
   sparkTest("coverageToRegionCoverage test") {
     val input = sc parallelize {
       Array((0L, 100),

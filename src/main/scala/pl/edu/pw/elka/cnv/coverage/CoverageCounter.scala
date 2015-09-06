@@ -4,7 +4,7 @@ import htsjdk.samtools.SAMRecord
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import pl.edu.pw.elka.cnv.utils.{ConvertionUtils, FileUtils}
+import pl.edu.pw.elka.cnv.utils.ConvertionUtils
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -21,7 +21,7 @@ import scala.collection.mutable.ArrayBuffer
  */
 class CoverageCounter(@transient sc: SparkContext, bedFile: Array[(Int, Int, Int, Int)], reads: RDD[(Int, SAMRecord)],
                       parseCigar: Boolean = false, countingMode: Int = CountingMode.COUNT_WHEN_STARTS, reduceWorkers: Int = 12)
-  extends Serializable with ConvertionUtils with FileUtils {
+  extends Serializable with ConvertionUtils {
 
   /**
    * Map of (chr, (regionId, start, end)) optimized for searching by chromosome and position.

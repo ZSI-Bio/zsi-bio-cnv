@@ -61,6 +61,12 @@ trait ConvertionUtils {
     result
   }
 
+  /**
+   * Method for converting data from BED file into map of region's coords.
+   *
+   * @param bedFile Array of (regionId, chr, start, end) containing all of the regions to be analyzed.
+   * @return Map of (regionId, length) containing coords of given regions.
+   */
   def bedFileToRegionCoords(bedFile: Array[(Int, Int, Int, Int)]): mutable.HashMap[Int, (Int, Int)] = {
     val result = new mutable.HashMap[Int, (Int, Int)]
     bedFile foreach {

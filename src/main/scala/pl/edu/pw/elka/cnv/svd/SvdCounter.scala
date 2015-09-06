@@ -15,7 +15,7 @@ import scala.collection.mutable.ArrayBuffer
  *
  * @param sc Apache Spark context.
  * @param bedFile Array of (regionId, chr, start, end) containing all of the regions to be analyzed.
- * @param zrpkms RDD of (regionId, (sampleId, zrpkm)) containing ZRPKM values for given regions and samples.
+ * @param zrpkms RDD of (regionId, (sampleId, zrpkm)) containing ZRPKM values of given regions by given samples.
  * @param svd Number of components to remove.
  * @param reduceWorkers Number of reduce workers to be used (default value - 12).
  */

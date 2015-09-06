@@ -36,7 +36,7 @@ class RpkmsCounter(@transient sc: SparkContext, reads: RDD[(Int, SAMRecord)], be
   }
 
   /**
-   * Method for calculation of RPKM values based on reads, BED file and coverage given in class constructor.
+   * Method for calculation of RPKM values based on coverage given in class constructor.
    *
    * @return RDD of (regionId, (sampleId, rpkm)) containing calculated RPKM values.
    */

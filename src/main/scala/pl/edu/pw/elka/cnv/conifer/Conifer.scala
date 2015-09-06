@@ -8,7 +8,7 @@ import pl.edu.pw.elka.cnv.caller.Caller
 import pl.edu.pw.elka.cnv.coverage.CoverageCounter
 import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
 import pl.edu.pw.elka.cnv.svd.SvdCounter
-import pl.edu.pw.elka.cnv.utils.{CNVUtils, ConvertionUtils, FileUtils, StatUtils}
+import pl.edu.pw.elka.cnv.utils.FileUtils
 import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
 
 /**
@@ -21,8 +21,9 @@ import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
  * @param svd Number of components to remove (default value - 12).
  * @param threshold +/- threshold for calling (minimum SVD-ZRPKM) (default value - 1.5).
  */
-class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String, minMedian: Double = 1.0, svd: Int = 12, threshold: Double = 1.5)
-  extends Serializable with ConvertionUtils with CNVUtils with FileUtils with StatUtils {
+class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String,
+              minMedian: Double = 1.0, svd: Int = 12, threshold: Double = 1.5)
+  extends Serializable with FileUtils {
 
   /**
    * Map of (sampleId, samplePath) containing all of the found BAM files.
