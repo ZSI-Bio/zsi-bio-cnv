@@ -12,12 +12,12 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
 
   val convertions = new ConvertionUtils with Serializable
 
-  sparkTest("bedFileToChromosomesMap test") {
-    val input = sc parallelize {
-      Array((2429, (1, 19203909, 19204106)),
-        (101874, (10, 113928069, 113928282)),
-        (179177, (20, 47115835, 47116753)))
-    }
+  test("bedFileToChromosomesMap test") {
+    val input = Array(
+      (2429, 1, 19203909, 19204106),
+      (101874, 10, 113928069, 113928282),
+      (179177, 20, 47115835, 47116753))
+
     val output = convertions.bedFileToChromosomesMap(input)
 
     output.keys should have size (3)
@@ -29,12 +29,12 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
     output(20)(47115835 / 10000) should contain theSameElementsAs Array((179177, 47115835, 47116753))
   }
 
-  sparkTest("bedFileToRegionChromosomes test") {
-    val input = sc parallelize {
-      Array((2429, (1, 19203909, 19204106)),
-        (101874, (10, 113928069, 113928282)),
-        (179177, (20, 47115835, 47116753)))
-    }
+  test("bedFileToRegionChromosomes test") {
+    val input = Array(
+      (2429, 1, 19203909, 19204106),
+      (101874, 10, 113928069, 113928282),
+      (179177, 20, 47115835, 47116753))
+
     val output = convertions.bedFileToRegionChromosomes(input)
 
     output.keys should have size (3)
@@ -45,12 +45,12 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
     output(179177) should be(20)
   }
 
-  sparkTest("bedFileToRegionLengths test") {
-    val input = sc parallelize {
-      Array((2429, (1, 19203909, 19204106)),
-        (101874, (10, 113928069, 113928282)),
-        (179177, (20, 47115835, 47116753)))
-    }
+  test("bedFileToRegionLengths test") {
+    val input = Array(
+      (2429, 1, 19203909, 19204106),
+      (101874, 10, 113928069, 113928282),
+      (179177, 20, 47115835, 47116753))
+
     val output = convertions.bedFileToRegionLengths(input)
 
     output.keys should have size (3)
