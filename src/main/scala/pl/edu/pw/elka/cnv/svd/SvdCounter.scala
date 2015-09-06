@@ -14,12 +14,12 @@ import scala.collection.mutable.ArrayBuffer
  * Main class for calculation of SVD decomposition.
  *
  * @param sc Apache Spark context.
- * @param bedFile RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
+ * @param bedFile Array of (regionId, chr, start, end) containing all of the regions to be analyzed.
  * @param zrpkms RDD of (regionId, (sampleId, zrpkm)) containing ZRPKM values for given regions and samples.
  * @param svd Number of components to remove.
  * @param reduceWorkers Number of reduce workers to be used (default value - 12).
  */
-class SvdCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (Int, Int, Int))], zrpkms: RDD[(Int, Iterable[(Int, Double)])],
+class SvdCounter(@transient sc: SparkContext, bedFile: Array[(Int, Int, Int, Int)], zrpkms: RDD[(Int, Iterable[(Int, Double)])],
                  svd: Int, reduceWorkers: Int = 12)
   extends Serializable with ConvertionUtils {
 
@@ -34,15 +34,16 @@ class SvdCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (Int, Int, Int)
   /**
    * Method for calculation of SVD decomposition based on ZRPKM values given in class constructor.
    *
-   * @return RDD of (chr, matrix) containing matrices of given chromosomes after SVD decomposition.
+   * @return RDD of (chr, regions, matrix) containing matrices after SVD decomposition.
    */
-  def calculateSvd: RDD[(Int, RealMatrix)] =
+  def calculateSvd: RDD[(Int, Array[Int], RealMatrix)] =
     for {
       (chr, rows) <- prepareRows
-      matrix = new BlockRealMatrix(rows.toArray.sortBy(_._1).map(_._2))
+      sortedRows = rows.toArray.sortBy(_._1)
+      matrix = new BlockRealMatrix(sortedRows.map(_._2))
       svd = new linear.SingularValueDecomposition(matrix)
       newMatrix = reconstructMatrix(svd)
-    } yield (chr, newMatrix)
+    } yield (chr, sortedRows.map(_._1), newMatrix)
 
   /**
    * Method that prepares rows for SVD decomposition.
@@ -57,7 +58,7 @@ class SvdCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (Int, Int, Int)
         val chr = regionChromosomes.value(regionId)
         if (!rowsMap.contains(chr))
           rowsMap(chr) = new ArrayBuffer[(Int, Array[Double])]
-        rowsMap(chr) += ((regionId, sampleZrpkms.toArray.sortBy(_._1).map(_._2)))
+        rowsMap(chr) += ((regionId, sampleZrpkms.toArray.sorted.map(_._2)))
       }
 
       rowsMap.iterator

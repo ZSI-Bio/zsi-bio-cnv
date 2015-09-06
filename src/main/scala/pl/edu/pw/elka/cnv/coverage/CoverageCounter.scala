@@ -13,13 +13,13 @@ import scala.collection.mutable.ArrayBuffer
  * Main class for calculation of coverage.
  *
  * @param sc Apache Spark context.
- * @param bedFile RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
+ * @param bedFile Array of (regionId, chr, start, end) containing all of the regions to be analyzed.
  * @param reads RDD of (sampleId, read) containing all of the reads to be analyzed.
  * @param parseCigar Flag indicating whether or not to parse a cigar string (default value - false).
  * @param countingMode Mode of coverage calculation to be used (default value - CountingMode.COUNT_WHEN_STARTS).
  * @param reduceWorkers Number of reduce workers to be used (default value - 12).
  */
-class CoverageCounter(@transient sc: SparkContext, bedFile: RDD[(Int, (Int, Int, Int))], reads: RDD[(Int, SAMRecord)],
+class CoverageCounter(@transient sc: SparkContext, bedFile: Array[(Int, Int, Int, Int)], reads: RDD[(Int, SAMRecord)],
                       parseCigar: Boolean = false, countingMode: Int = CountingMode.COUNT_WHEN_STARTS, reduceWorkers: Int = 12)
   extends Serializable with ConvertionUtils with FileUtils {
 

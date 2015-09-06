@@ -13,10 +13,10 @@ import scala.collection.mutable
  *
  * @param sc Apache Spark context.
  * @param reads RDD of (sampleId, read) containing all of the reads to be analyzed.
- * @param bedFile RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
+ * @param bedFile Array of (regionId, chr, start, end) containing all of the regions to be analyzed.
  * @param coverage RDD of (regionId, (sampleId, coverage)) containing coverage of given regions by given samples.
  */
-class RpkmsCounter(@transient sc: SparkContext, reads: RDD[(Int, SAMRecord)], bedFile: RDD[(Int, (Int, Int, Int))], coverage: RDD[(Int, Iterable[(Int, Int)])])
+class RpkmsCounter(@transient sc: SparkContext, reads: RDD[(Int, SAMRecord)], bedFile: Array[(Int, Int, Int, Int)], coverage: RDD[(Int, Iterable[(Int, Int)])])
   extends Serializable with ConvertionUtils with CNVUtils {
 
   /**

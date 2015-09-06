@@ -31,7 +31,7 @@ class ZrpkmsCounter(samples: Map[Int, String], rpkms: RDD[(Int, Iterable[(Int, D
       sampleRpkmsWithZeros = fillWithZeros(sampleRpkms)
 
       med = median(sampleRpkmsWithZeros.unzip._2.toArray)
-      if med > minMedian
+      if med >= minMedian
       std = stddev(sampleRpkmsWithZeros.unzip._2.toArray)
 
       (sampleId, rpkm) <- sampleRpkmsWithZeros
