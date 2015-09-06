@@ -19,7 +19,7 @@ object Test {
     val bamFilesPath = "/Users/mariusz-macbook/Downloads/ZSI-Bio/Tools/conifer_v0.2.2/exomes_data"
 
     val start = System.currentTimeMillis
-    val conifer = new Conifer(sc, bedFilePath, bamFilesPath)
+    val conifer = new Conifer(sc, bedFilePath, bamFilesPath, 1.00000000, 1, 1.50000000)
     val loadingTime = System.currentTimeMillis
 
     val coverage = conifer.coverage
@@ -78,7 +78,7 @@ object Test {
     zrpkms.saveAsTextFile(path)
   }
 
-  private def saveMatrices(matrices: RDD[(Int, RealMatrix)]) = {
+  private def saveMatrices(matrices: RDD[(Int, Array[Int], RealMatrix)]) = {
     val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/results/matrices.txt"
     maybeRemoveDir(path)
     matrices.saveAsTextFile(path)

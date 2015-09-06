@@ -35,9 +35,9 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   private val reads: RDD[(Int, SAMRecord)] = loadReads(sc, samples)
 
   /**
-   * RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
+   * Array of (regionId, chr, start, end) containing all of the regions to be analyzed.
    */
-  private val bedFile: RDD[(Int, (Int, Int, Int))] = readBedFile(sc, bedFilePath)
+  private val bedFile: Array[(Int, Int, Int, Int)] = readBedFile(bedFilePath)
 
   /**
    * Method for calculation of coverage.
@@ -75,9 +75,9 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    * Method for calculation of SVD decomposition.
    *
    * @param zrpkms RDD of (regionId, (sampleId, zrpkm)) containing ZRPKM values.
-   * @return RDD of (chr, matrix) containing matrices after SVD decomposition.
+   * @return RDD of (chr, regions, matrix) containing matrices after SVD decomposition.
    */
-  def svd(zrpkms: RDD[(Int, Iterable[(Int, Double)])]): RDD[(Int, RealMatrix)] = {
+  def svd(zrpkms: RDD[(Int, Iterable[(Int, Double)])]): RDD[(Int, Array[Int], RealMatrix)] = {
     val counter = new SvdCounter(sc, bedFile, zrpkms, svd)
     counter.calculateSvd
   }
@@ -85,14 +85,12 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   /**
    * Method for making calls.
    *
-   * @param matrices RDD of (chr, matrix) containing matrices after SVD decomposition.
+   * @param matrices RDD of (chr, regions, matrix) containing matrices after SVD decomposition.
    * @return RDD of (sampleId, chr, start, stop, state) containing detected CNV mutations.
    */
-  def call(matrices: RDD[(Int, RealMatrix)]): RDD[(Int, Int, Int, Int, String)] =
-    for {
-      (chr, matrix) <- matrices
-      caller = new Caller(matrix, threshold)
-      (sampleId, start, stop, state) <- caller.call
-    } yield (sampleId, chr, start, stop, state)
+  def call(matrices: RDD[(Int, Array[Int], RealMatrix)]): RDD[(Int, Int, Int, Int, String)] = {
+    val caller = new Caller(sc, bedFile, matrices, threshold)
+    caller.call
+  }
 
 }
