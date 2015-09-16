@@ -25,7 +25,7 @@ class ZrpkmsCounter(samples: Map[Int, String], rpkms: RDD[(Int, Iterable[(Int, D
    *
    * @return RDD of (regionId, (sampleId, zrpkm)) containing calculated ZRPKM values.
    */
-  def calculateZrpkms: RDD[(Int, Iterable[(Int, Double)])] = {
+  def calculateZrpkms: RDD[(Int, Iterable[(Int, Double)])] =
     for {
       (regionId, sampleRpkms) <- rpkms
       sampleRpkmsWithZeros = fillWithZeros(sampleRpkms)
@@ -34,9 +34,10 @@ class ZrpkmsCounter(samples: Map[Int, String], rpkms: RDD[(Int, Iterable[(Int, D
       if med >= minMedian
       std = stddev(sampleRpkmsWithZeros.unzip._2.toArray)
 
-      (sampleId, rpkm) <- sampleRpkmsWithZeros
-    } yield (regionId, (sampleId, zrpkm(rpkm, med, std)))
-  } groupByKey
+      sampleZrpkms = sampleRpkmsWithZeros map {
+        case (sampleId, rpkm) => (sampleId, zrpkm(rpkm, med, std))
+      } toIterable
+    } yield (regionId, sampleZrpkms)
 
   /**
    * Method that puts zeros in place of no RPKM value.

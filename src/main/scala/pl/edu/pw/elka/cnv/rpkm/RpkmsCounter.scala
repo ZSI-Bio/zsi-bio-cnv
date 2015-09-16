@@ -41,11 +41,13 @@ class RpkmsCounter(@transient sc: SparkContext, reads: RDD[(Int, SAMRecord)], be
    * @return RDD of (regionId, (sampleId, rpkm)) containing calculated RPKM values.
    */
   def calculateRpkms: RDD[(Int, Iterable[(Int, Double)])] =
-    coverage flatMap {
-      case (regionId, sampleCoverages) => sampleCoverages map {
-        case (sampleId, coverage) =>
-          (regionId, (sampleId, rpkm(coverage, regionLengths.value(regionId), readCounts.value(sampleId))))
-      }
-    } groupByKey
+    coverage map {
+      case (regionId, sampleCoverages) =>
+        val sampleRpkms = sampleCoverages map {
+          case (sampleId, coverage) =>
+            (sampleId, rpkm(coverage, regionLengths.value(regionId), readCounts.value(sampleId)))
+        }
+        (regionId, sampleRpkms)
+    }
 
 }
