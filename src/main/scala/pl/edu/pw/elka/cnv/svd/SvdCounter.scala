@@ -2,10 +2,8 @@ package pl.edu.pw.elka.cnv.svd
 
 import org.apache.commons.math3.linear
 import org.apache.commons.math3.linear.{BlockRealMatrix, RealMatrix}
-import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import pl.edu.pw.elka.cnv.utils.ConvertionUtils
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -13,23 +11,13 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * Main class for calculation of SVD decomposition.
  *
- * @param sc Apache Spark context.
- * @param bedFile Array of (regionId, chr, start, end) containing all of the regions to be analyzed.
+ * @param bedFile Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
  * @param zrpkms RDD of (regionId, (sampleId, zrpkm)) containing ZRPKM values of given regions by given samples.
  * @param svd Number of components to remove.
  * @param reduceWorkers Number of reduce workers to be used (default value - 12).
  */
-class SvdCounter(@transient sc: SparkContext, bedFile: Array[(Int, Int, Int, Int)], zrpkms: RDD[(Int, Iterable[(Int, Double)])],
-                 svd: Int, reduceWorkers: Int = 12)
-  extends Serializable with ConvertionUtils {
-
-  /**
-   * Map of (regionId, chr) containing chromosomes of given regions.
-   * It is spread among all of the nodes for quick access.
-   */
-  private val regionChromosomes: Broadcast[mutable.HashMap[Int, Int]] = sc.broadcast {
-    bedFileToRegionChromosomes(bedFile)
-  }
+class SvdCounter(bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], zrpkms: RDD[(Int, Iterable[(Int, Double)])], svd: Int, reduceWorkers: Int = 12)
+  extends Serializable {
 
   /**
    * Method for calculation of SVD decomposition based on ZRPKM values given in class constructor.
@@ -55,7 +43,7 @@ class SvdCounter(@transient sc: SparkContext, bedFile: Array[(Int, Int, Int, Int
       val rowsMap = new mutable.HashMap[Int, ArrayBuffer[(Int, Array[Double])]]
 
       for ((regionId, sampleZrpkms) <- partition) {
-        val chr = regionChromosomes.value(regionId)
+        val chr = bedFile.value(regionId)._1
         if (!rowsMap.contains(chr))
           rowsMap(chr) = new ArrayBuffer[(Int, Array[Double])]
         rowsMap(chr) += ((regionId, sampleZrpkms.toArray.sorted.map(_._2)))

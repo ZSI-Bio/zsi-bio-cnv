@@ -8,6 +8,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 
+import scala.collection.mutable
 import scala.io.Source
 
 /**
@@ -51,14 +52,17 @@ trait FileUtils extends ConvertionUtils {
    * Method for loading data from BED file.
    *
    * @param path Path to folder containing BED file.
-   * @return Array of (regionId, chr, start, end) containing all of the regions to be analyzed.
+   * @return Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
    */
-  def readBedFile(path: String): Array[(Int, Int, Int, Int)] =
-    Source.fromFile(path).getLines.zipWithIndex map {
+  def readBedFile(path: String): mutable.HashMap[Int, (Int, Int, Int)] = {
+    val result = new mutable.HashMap[Int, (Int, Int, Int)]
+    Source.fromFile(path).getLines.zipWithIndex foreach {
       case (line, regionId) => line.split("\t") match {
         case Array(chr, start, end, _*) =>
-          (regionId.toInt, chrStrToInt(chr), start.toInt, end.toInt)
+          result(regionId.toInt) = ((chrStrToInt(chr), start.toInt, end.toInt))
       }
-    } toArray
+    }
+    result
+  }
 
 }

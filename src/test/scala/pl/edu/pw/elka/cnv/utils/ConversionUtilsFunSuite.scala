@@ -5,6 +5,8 @@ import java.io.Serializable
 import org.scalatest.Matchers
 import pl.edu.pw.elka.cnv.SparkFunSuite
 
+import scala.collection.mutable
+
 /**
  * Created by mariusz-macbook on 30/04/15.
  */
@@ -13,10 +15,10 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
   val convertions = new ConvertionUtils with Serializable
 
   test("bedFileToChromosomesMap test") {
-    val input = Array(
-      (2429, 1, 19203909, 19204106),
-      (101874, 10, 113928069, 113928282),
-      (179177, 20, 47115835, 47116753))
+    val input = mutable.HashMap(
+      2429 ->(1, 19203909, 19204106),
+      101874 ->(10, 113928069, 113928282),
+      179177 ->(20, 47115835, 47116753))
 
     val output = convertions.bedFileToChromosomesMap(input)
 

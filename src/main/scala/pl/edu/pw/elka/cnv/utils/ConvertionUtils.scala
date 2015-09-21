@@ -15,12 +15,12 @@ trait ConvertionUtils {
   /**
    * Method for converting data from BED file into map optimized for searching by chromosome and position.
    *
-   * @param bedFile Array of (regionId, chr, start, end) containing all of the regions to be analyzed.
+   * @param bedFile Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
    * @return Map of (chr, (regionId, start end)) optimized for calculating coverage.
    */
-  def bedFileToChromosomesMap(bedFile: Array[(Int, Int, Int, Int)]): mutable.HashMap[Int, Array[ArrayBuffer[(Int, Int, Int)]]] = {
+  def bedFileToChromosomesMap(bedFile: mutable.HashMap[Int, (Int, Int, Int)]): mutable.HashMap[Int, Array[ArrayBuffer[(Int, Int, Int)]]] = {
     val result = new mutable.HashMap[Int, Array[ArrayBuffer[(Int, Int, Int)]]]
-    for ((regionId, chr, start, end) <- bedFile) {
+    for ((regionId, (chr, start, end)) <- bedFile) {
       if (!result.contains(chr))
         result(chr) = new Array[ArrayBuffer[(Int, Int, Int)]](25000)
       val startId = start / 10000

@@ -3,6 +3,7 @@ package pl.edu.pw.elka.cnv.conifer
 import htsjdk.samtools.SAMRecord
 import org.apache.commons.math3.linear.RealMatrix
 import org.apache.spark.SparkContext
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.caller.Caller
 import pl.edu.pw.elka.cnv.coverage.CoverageCounter
@@ -10,6 +11,8 @@ import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
 import pl.edu.pw.elka.cnv.svd.SvdCounter
 import pl.edu.pw.elka.cnv.utils.FileUtils
 import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
+
+import scala.collection.mutable
 
 /**
  * Main class for CoNIFER algorithm.
@@ -21,8 +24,7 @@ import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
  * @param svd Number of components to remove (default value - 12).
  * @param threshold +/- threshold for calling (minimum SVD-ZRPKM) (default value - 1.5).
  */
-class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String,
-              minMedian: Double = 1.0, svd: Int = 12, threshold: Double = 1.5)
+class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String, minMedian: Double = 1.0, svd: Int = 12, threshold: Double = 1.5)
   extends Serializable with FileUtils {
 
   /**
@@ -36,9 +38,11 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   private val reads: RDD[(Int, SAMRecord)] = loadReads(sc, samples)
 
   /**
-   * Array of (regionId, chr, start, end) containing all of the regions to be analyzed.
+   * Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
    */
-  private val bedFile: Array[(Int, Int, Int, Int)] = readBedFile(bedFilePath)
+  private val bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]] = sc.broadcast {
+    readBedFile(bedFilePath)
+  }
 
   /**
    * Method for calculation of coverage.
@@ -57,7 +61,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    * @return RDD of (regionId, (sampleId, rpkm)) containing calculated RPKM values.
    */
   def rpkms(coverage: RDD[(Int, Iterable[(Int, Int)])]): RDD[(Int, Iterable[(Int, Double)])] = {
-    val counter = new RpkmsCounter(sc, reads, bedFile, coverage)
+    val counter = new RpkmsCounter(reads, bedFile, coverage)
     counter.calculateRpkms
   }
 
@@ -79,7 +83,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    * @return RDD of (chr, regions, matrix) containing matrices after SVD decomposition.
    */
   def svd(zrpkms: RDD[(Int, Iterable[(Int, Double)])]): RDD[(Int, Array[Int], RealMatrix)] = {
-    val counter = new SvdCounter(sc, bedFile, zrpkms, svd)
+    val counter = new SvdCounter(bedFile, zrpkms, svd)
     counter.calculateSvd
   }
 
@@ -90,7 +94,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    * @return RDD of (sampleId, chr, start, stop, state) containing detected CNV mutations.
    */
   def call(matrices: RDD[(Int, Array[Int], RealMatrix)]): RDD[(Int, Int, Int, Int, String)] = {
-    val caller = new Caller(sc, bedFile, matrices, threshold)
+    val caller = new Caller(bedFile, matrices, threshold)
     caller.call
   }
 
