@@ -13,13 +13,14 @@ object Test {
       .setAppName("CNV")
       .setMaster("local[*]")
       .set("spark.driver.host", "127.0.0.1")
+      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     val sc = new SparkContext(conf)
 
     val bedFilePath = "/Users/mariusz-macbook/Downloads/ZSI-Bio/Tools/conifer_v0.2.2/exomes_data/20120518.consensus.annotation.txt"
     val bamFilesPath = "/Users/mariusz-macbook/Downloads/ZSI-Bio/Tools/conifer_v0.2.2/exomes_data"
 
     val start = System.currentTimeMillis
-    val conifer = new Conifer(sc, bedFilePath, bamFilesPath, 1.00000000, 1, 1.50000000)
+    val conifer = new Conifer(sc, bedFilePath, bamFilesPath, 1.0, 1, 1.5)
     val loadingTime = System.currentTimeMillis
 
     val coverage = conifer.coverage
