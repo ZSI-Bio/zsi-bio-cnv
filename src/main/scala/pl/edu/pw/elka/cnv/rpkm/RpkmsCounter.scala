@@ -26,17 +26,28 @@ class RpkmsCounter(reads: RDD[(Int, SAMRecord)], bedFile: Broadcast[mutable.Hash
   /**
    * Method for calculation of RPKM values based on coverage given in class constructor.
    *
-   * @return RDD of (regionId, (sampleId, rpkm)) containing calculated RPKM values.
+   * @return RDD of (regionId, rpkms) containing calculated RPKM values.
    */
-  def calculateRpkms: RDD[(Int, Iterable[(Int, Double)])] =
+  def calculateRpkms: RDD[(Int, Array[Double])] =
     coverage map {
       case (regionId, sampleCoverages) =>
         val (_, start, stop) = bedFile.value(regionId)
-        val sampleRpkms = sampleCoverages map {
-          case (sampleId, coverage) =>
-            (sampleId, rpkm(coverage, stop - start, readCounts(sampleId)))
+        val sampleRpkms = fillWithZeros(sampleCoverages) map {
+          case (coverage, sampleId) => rpkm(coverage, stop - start, readCounts(sampleId))
         }
         (regionId, sampleRpkms)
     }
+
+  /**
+   * Method that puts zeros in place of no coverage value.
+   *
+   * @param sampleCoverages Iterable of (sampleId, coverage) containing coverage of given samples.
+   * @return Array of (coverage, sampleId) containing coverage of all samples.
+   */
+  private def fillWithZeros(sampleCoverages: Iterable[(Int, Int)]): Array[(Int, Int)] = {
+    val result = new Array[Int](readCounts.size)
+    sampleCoverages.foreach(x => result(x._1) = x._2)
+    result.zipWithIndex
+  }
 
 }

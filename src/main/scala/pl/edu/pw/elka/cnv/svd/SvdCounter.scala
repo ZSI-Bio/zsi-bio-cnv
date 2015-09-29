@@ -12,11 +12,11 @@ import scala.collection.mutable.ArrayBuffer
  * Main class for calculation of SVD decomposition.
  *
  * @param bedFile Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
- * @param zrpkms RDD of (regionId, (sampleId, zrpkm)) containing ZRPKM values of given regions by given samples.
+ * @param zrpkms RDD of (regionId, zrpkms) containing ZRPKM values of given regions.
  * @param svd Number of components to remove.
  * @param reduceWorkers Number of reduce workers to be used (default value - 12).
  */
-class SvdCounter(bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], zrpkms: RDD[(Int, Iterable[(Int, Double)])], svd: Int, reduceWorkers: Int = 12)
+class SvdCounter(bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], zrpkms: RDD[(Int, Array[Double])], svd: Int, reduceWorkers: Int = 12)
   extends Serializable {
 
   /**
@@ -46,7 +46,7 @@ class SvdCounter(bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], zrpk
         val chr = bedFile.value(regionId)._1
         if (!rowsMap.contains(chr))
           rowsMap(chr) = new ArrayBuffer[(Int, Array[Double])]
-        rowsMap(chr) += ((regionId, sampleZrpkms.toArray.sorted.map(_._2)))
+        rowsMap(chr) += ((regionId, sampleZrpkms))
       }
 
       rowsMap.iterator

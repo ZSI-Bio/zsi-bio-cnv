@@ -11,7 +11,7 @@ object Test {
   def main(args: Array[String]) {
     val conf = new SparkConf()
       .setAppName("CNV")
-      .setMaster("local[*]")
+      .setMaster("local[4]")
       .set("spark.driver.host", "127.0.0.1")
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     val sc = new SparkContext(conf)
@@ -67,13 +67,13 @@ object Test {
     coverage.saveAsTextFile(path)
   }
 
-  private def saveRpkms(rpkms: RDD[(Int, Iterable[(Int, Double)])]) = {
+  private def saveRpkms(rpkms: RDD[(Int, Array[Double])]) = {
     val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/results/rpkms.txt"
     maybeRemoveDir(path)
     rpkms.saveAsTextFile(path)
   }
 
-  private def saveZrpkms(zrpkms: RDD[(Int, Iterable[(Int, Double)])]) = {
+  private def saveZrpkms(zrpkms: RDD[(Int, Array[Double])]) = {
     val path = "/Users/mariusz-macbook/IdeaProjects/zsi-bio-cnv/resources/results/zrpkms.txt"
     maybeRemoveDir(path)
     zrpkms.saveAsTextFile(path)

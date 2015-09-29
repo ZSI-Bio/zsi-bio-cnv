@@ -58,9 +58,9 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    * Method for calculation of RPKM values.
    *
    * @param coverage RDD of (regionId, (sampleId, coverage)) containing coverage.
-   * @return RDD of (regionId, (sampleId, rpkm)) containing calculated RPKM values.
+   * @return RDD of (regionId, rpkms) containing calculated RPKM values.
    */
-  def rpkms(coverage: RDD[(Int, Iterable[(Int, Int)])]): RDD[(Int, Iterable[(Int, Double)])] = {
+  def rpkms(coverage: RDD[(Int, Iterable[(Int, Int)])]): RDD[(Int, Array[Double])] = {
     val counter = new RpkmsCounter(reads, bedFile, coverage)
     counter.calculateRpkms
   }
@@ -68,21 +68,21 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   /**
    * Method for calculation of ZRPKM values.
    *
-   * @param rpkms RDD of (regionId, (sampleId, rpkm)) containing RPKM values.
-   * @return RDD of (regionId, (sampleId, zrpkm)) containing calculated ZRPKM values.
+   * @param rpkms RDD of (regionId, rpkms) containing RPKM values.
+   * @return RDD of (regionId, zrpkms) containing calculated ZRPKM values.
    */
-  def zrpkms(rpkms: RDD[(Int, Iterable[(Int, Double)])]): RDD[(Int, Iterable[(Int, Double)])] = {
-    val counter = new ZrpkmsCounter(samples, rpkms, minMedian)
+  def zrpkms(rpkms: RDD[(Int, Array[Double])]): RDD[(Int, Array[Double])] = {
+    val counter = new ZrpkmsCounter(rpkms, minMedian)
     counter.calculateZrpkms
   }
 
   /**
    * Method for calculation of SVD decomposition.
    *
-   * @param zrpkms RDD of (regionId, (sampleId, zrpkm)) containing ZRPKM values.
+   * @param zrpkms RDD of (regionId, zrpkms) containing ZRPKM values.
    * @return RDD of (chr, regions, matrix) containing matrices after SVD decomposition.
    */
-  def svd(zrpkms: RDD[(Int, Iterable[(Int, Double)])]): RDD[(Int, Array[Int], RealMatrix)] = {
+  def svd(zrpkms: RDD[(Int, Array[Double])]): RDD[(Int, Array[Int], RealMatrix)] = {
     val counter = new SvdCounter(bedFile, zrpkms, svd)
     counter.calculateSvd
   }
