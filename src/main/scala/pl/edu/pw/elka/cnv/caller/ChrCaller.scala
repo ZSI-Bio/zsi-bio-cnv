@@ -4,14 +4,35 @@ import org.apache.commons.math3.linear.{BlockRealMatrix, RealMatrix}
 import pl.edu.pw.elka.cnv.utils.{CNVUtils, StatUtils}
 
 /**
- * Created by mariusz-macbook on 06/09/15.
+ * Main class for making calls based on data from one chromosome.
+ *
+ * @param regions Array containing region identifiers of each row in matrix parameter.
+ * @param matrix Matrix after SVD decomposition containing SVD-ZRPKM values from one chromosome.
+ * @param threshold +/- Threshold for calling (minimum SVD-ZRPKM).
  */
 class ChrCaller(regions: Array[Int], matrix: RealMatrix, threshold: Double) extends Serializable with CNVUtils with StatUtils {
 
+  /**
+   * Smoothed matrix.
+   */
   private val smoothed: RealMatrix = smooth(matrix, 15)
+
+  /**
+   * Means of SVD-ZRPKM values for each row from matrix.
+   */
   private val means: Array[Double] = smoothed.getData.map(mean)
+
+  /**
+   * Stddevs of SVD-ZRPKM values for each row from matrix.
+   */
   private val stddevs: Array[Double] = smoothed.getData.map(stddev)
 
+  /**
+   * Method that detects mutations in one chromosome.
+   * It calculates breakpoints and calls for duplications and deletions.
+   *
+   * @return Array of (sampleId, startId, stopId, state) containing detected CNV mutations.
+   */
   def call: Array[(Int, Int, Int, String)] =
     for {
       idx <- (0 until smoothed.getColumnDimension).toArray
@@ -28,6 +49,13 @@ class ChrCaller(regions: Array[Int], matrix: RealMatrix, threshold: Double) exte
       (start, stop, state) <- mergedDupCalls ++ mergedDelCalls
     } yield (idx, regions(start), regions(stop), state)
 
+  /**
+   * Method that smooths matrix data.
+   *
+   * @param matrix Matrix to smooth.
+   * @param window Size of Blackman window.
+   * @return Smoothed matrix.
+   */
   private def smooth(matrix: RealMatrix, window: Int): RealMatrix =
     if (window <= 0) matrix
     else {
@@ -42,6 +70,13 @@ class ChrCaller(regions: Array[Int], matrix: RealMatrix, threshold: Double) exte
       new BlockRealMatrix(rows).transpose
     }
 
+  /**
+   * Method that calculates breakpoints.
+   *
+   * @param data One column from input matrix.
+   * @param threshold Threshold for calling.
+   * @return Calculated breakpoints.
+   */
   private def getBreakPoints(data: Array[Double], threshold: Double): Array[(Int, Int)] = {
 
     def cond(elem: Double): Boolean =
@@ -59,6 +94,14 @@ class ChrCaller(regions: Array[Int], matrix: RealMatrix, threshold: Double) exte
     } toArray
   }
 
+  /**
+   * Method that calculates calls.
+   *
+   * @param breakPoints Breakpoints of given type.
+   * @param column One column from input matrix.
+   * @param state Flag indicating what king of calls to calculate.
+   * @return Calculated calls.
+   */
   private def getCalls(breakPoints: Array[(Int, Int)], column: Array[Double], state: String): Array[(Int, Int, String)] = {
 
     def cond(idx: Int): Boolean =
@@ -81,6 +124,12 @@ class ChrCaller(regions: Array[Int], matrix: RealMatrix, threshold: Double) exte
     }
   }
 
+  /**
+   * Method that merges calls.
+   *
+   * @param calls Calls of given type to merge.
+   * @return Merged calls.
+   */
   private def mergeCalls(calls: Array[(Int, Int, String)]): List[(Int, Int, String)] = {
 
     def merge(pStart: Int, pStop: Int, pCalls: List[(Int, Int, String)]): List[(Int, Int, String)] =
