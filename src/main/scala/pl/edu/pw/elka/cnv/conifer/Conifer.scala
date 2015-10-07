@@ -98,4 +98,30 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
     caller.call
   }
 
+  /**
+   * Method that performs all steps of CoNIFER algorithm.
+   *
+   * @return RDD of (sampleId, chr, start, stop, state) containing detected CNV mutations.
+   */
+  def calculate: RDD[(Int, Int, Int, Int, String)] = {
+
+    // 1. Calculate coverage
+    val calculatedCoverage = coverage
+
+    // 2. Calculare RPKM values
+    val calculatedRpkms = rpkms(calculatedCoverage)
+
+    // 3. Calculate ZRPKM values
+    val calculatedZrpkms = zrpkms(calculatedRpkms)
+
+    // 4. Calculate SVD-ZRPKM values
+    val calculatedMatrices = svd(calculatedZrpkms)
+
+    // 5. Make calls
+    val calculatedCalls = call(calculatedMatrices)
+
+    // 6. Return detected CNV mutations
+    calculatedCalls
+  }
+
 }
