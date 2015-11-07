@@ -1,12 +1,12 @@
 package pl.edu.pw.elka.cnv.conifer
 
-import htsjdk.samtools.SAMRecord
 import org.apache.commons.math3.linear.RealMatrix
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.caller.Caller
 import pl.edu.pw.elka.cnv.coverage.CoverageCounter
+import pl.edu.pw.elka.cnv.model.CNVRecord
 import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
 import pl.edu.pw.elka.cnv.svd.SvdCounter
 import pl.edu.pw.elka.cnv.utils.FileUtils
@@ -35,7 +35,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   /**
    * RDD of (sampleId, read) containing all of the reads to be analyzed.
    */
-  private val reads: RDD[(Int, SAMRecord)] = loadReads(sc, samples)
+  private val reads: RDD[(Int, CNVRecord)] = loadReads(sc, samples)
 
   /**
    * Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.

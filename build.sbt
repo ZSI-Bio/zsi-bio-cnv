@@ -5,11 +5,10 @@ version := "1.0"
 scalaVersion := "2.10.4"
 
 libraryDependencies ++= Seq(
-  "org.scalatest" % "scalatest_2.10" % "3.0.0-M9" % "test",
-  "org.apache.spark" % "spark-core_2.10" % "1.5.1",
-  "spark.jobserver" % "job-server-api_2.10" % "0.5.2",
-  "org.apache.commons" % "commons-math3" % "3.5",
-  "org.seqdoop" % "hadoop-bam" % "7.1.0"
+  "org.scalatest" % "scalatest_2.10" % "2.2.5" % "test",
+  "org.apache.spark" % "spark-core_2.10" % "1.4.1",
+  "org.bdgenomics.adam" % "adam-core_2.10" % "0.18.1",
+  "spark.jobserver" % "job-server-api_2.10" % "0.5.2"
 )
 
 resolvers ++= Seq(
@@ -27,3 +26,5 @@ copyDocAssetsTask := {
 }
 
 copyDocAssetsTask <<= copyDocAssetsTask triggeredBy (doc in Compile)
+
+net.virtualvoid.sbt.graph.Plugin.graphSettings

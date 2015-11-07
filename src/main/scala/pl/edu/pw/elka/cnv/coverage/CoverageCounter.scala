@@ -1,9 +1,9 @@
 package pl.edu.pw.elka.cnv.coverage
 
-import htsjdk.samtools.SAMRecord
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
+import pl.edu.pw.elka.cnv.model.CNVRecord
 import pl.edu.pw.elka.cnv.utils.ConvertionUtils
 
 import scala.collection.mutable
@@ -19,7 +19,7 @@ import scala.collection.mutable.ArrayBuffer
  * @param countingMode Mode of coverage calculation to be used (default value - CountingMode.COUNT_WHEN_STARTS).
  * @param reduceWorkers Number of reduce workers to be used (default value - 12).
  */
-class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], reads: RDD[(Int, SAMRecord)],
+class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], reads: RDD[(Int, CNVRecord)],
                       parseCigar: Boolean = false, countingMode: Int = CountingMode.COUNT_WHEN_STARTS, reduceWorkers: Int = 12)
   extends Serializable with ConvertionUtils {
 
@@ -42,8 +42,8 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
       val regionsCountMap = new mutable.HashMap[Long, Int]
 
       for ((sampleId, read) <- partition)
-        if (chromosomesMap.value.contains(chrStrToInt(read.getReferenceName))) {
-          val regions = chromosomesMap.value(chrStrToInt(read.getReferenceName))
+        if (chromosomesMap.value.contains(read.getReferenceName)) {
+          val regions = chromosomesMap.value(read.getReferenceName)
           val bases = genBases(read)
           for ((baseStart, baseEnd) <- bases) {
             val regionsToCheck = getRegionsToCheck(baseStart, regions)
@@ -111,7 +111,7 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
    * @param read Read to be analyzed.
    * @return Array of (baseStart, baseEnd) containing all of the bases generated from a given read.
    */
-  private def genBases(read: SAMRecord): ArrayBuffer[(Int, Int)] =
+  private def genBases(read: CNVRecord): ArrayBuffer[(Int, Int)] =
     if (parseCigar) genBasesFromCigar(read.getAlignmentStart, read.getCigar)
     else ArrayBuffer((read.getAlignmentStart, read.getAlignmentEnd))
 

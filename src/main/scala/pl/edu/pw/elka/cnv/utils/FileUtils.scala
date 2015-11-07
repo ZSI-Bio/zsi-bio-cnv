@@ -2,11 +2,13 @@ package pl.edu.pw.elka.cnv.utils
 
 import java.io.File
 
-import htsjdk.samtools.SAMRecord
 import org.apache.hadoop.io.LongWritable
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.bdgenomics.adam.rdd.ADAMContext
+import org.bdgenomics.formats.avro.AlignmentRecord
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
+import pl.edu.pw.elka.cnv.model.{AlignmentRecordAdapter, CNVRecord, SAMRecordAdapter}
 
 import scala.collection.mutable
 import scala.io.Source
@@ -26,7 +28,8 @@ trait FileUtils extends ConvertionUtils {
    */
   def scanForSamples(path: String): Map[Int, String] =
     new File(path).listFiles.filter(
-      _.getName.endsWith(".bam")
+      file => file.getName.endsWith(".bam")
+        || file.getName.endsWith(".adam")
     ).zipWithIndex.map {
       case (file, index) =>
         (index, file.getPath)
@@ -39,11 +42,18 @@ trait FileUtils extends ConvertionUtils {
    * @param samples Map of (sampleId, samplePath) containing all of the samples to be analyzed.
    * @return RDD of (sampleId, read) containing all of the reads to be analyzed.
    */
-  def loadReads(sc: SparkContext, samples: Map[Int, String]): RDD[(Int, SAMRecord)] =
-    samples.foldLeft(sc.parallelize[(Int, SAMRecord)](Seq())) {
+  def loadReads(sc: SparkContext, samples: Map[Int, String]): RDD[(Int, CNVRecord)] =
+    samples.foldLeft(sc.parallelize[(Int, CNVRecord)](Seq())) {
       case (acc, (sampleId, samplePath)) => acc union {
-        sc.newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](samplePath) map {
-          read => (sampleId, read._2.get)
+        samplePath match {
+          case bam if samplePath.endsWith(".bam") =>
+            sc.newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](samplePath) map {
+              read => (sampleId, new SAMRecordAdapter(read._2.get))
+            }
+          case adam if samplePath.endsWith(".adam") =>
+            new ADAMContext(sc).loadParquet[AlignmentRecord](samplePath) map {
+              read => (sampleId, new AlignmentRecordAdapter(read))
+            }
         }
       }
     }

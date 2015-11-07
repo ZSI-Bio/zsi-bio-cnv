@@ -5,7 +5,7 @@ import htsjdk.samtools.Cigar
 /**
  * Created by mariusz-macbook on 07/11/15.
  */
-trait CNVRecord {
+trait CNVRecord extends Serializable {
 
   def getReferenceName: Int
 

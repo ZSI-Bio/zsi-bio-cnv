@@ -1,3 +1,4 @@
 .idea/
 target/
-resources/results
+resources/results/
+adam.log
