@@ -21,4 +21,16 @@ class AlignmentRecordAdapter(record: AlignmentRecord) extends CNVRecord with Con
   override def getCigar: Cigar =
     TextCigarCodec.decode(record.getCigar)
 
+  override def getNotPrimaryAlignmentFlag: Boolean =
+    !record.getPrimaryAlignment
+
+  override def getReadFailsVendorQualityCheckFlag: Boolean =
+    record.getFailedVendorQualityChecks
+
+  override def getDuplicateReadFlag: Boolean =
+    record.getDuplicateRead
+
+  override def getReadUnmappedFlag: Boolean =
+    !record.getReadMapped
+
 }

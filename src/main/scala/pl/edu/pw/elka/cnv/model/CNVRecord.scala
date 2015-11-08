@@ -15,4 +15,12 @@ trait CNVRecord extends Serializable {
 
   def getCigar: Cigar
 
+  def getNotPrimaryAlignmentFlag: Boolean
+
+  def getReadFailsVendorQualityCheckFlag: Boolean
+
+  def getDuplicateReadFlag: Boolean
+
+  def getReadUnmappedFlag: Boolean
+
 }

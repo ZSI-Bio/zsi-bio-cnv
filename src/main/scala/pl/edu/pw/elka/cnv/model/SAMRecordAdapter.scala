@@ -20,4 +20,16 @@ class SAMRecordAdapter(record: SAMRecord) extends CNVRecord with ConvertionUtils
   override def getCigar: Cigar =
     record.getCigar
 
+  override def getNotPrimaryAlignmentFlag: Boolean =
+    record.getNotPrimaryAlignmentFlag
+
+  override def getReadFailsVendorQualityCheckFlag: Boolean =
+    record.getReadFailsVendorQualityCheckFlag
+
+  override def getDuplicateReadFlag: Boolean =
+    record.getDuplicateReadFlag
+
+  override def getReadUnmappedFlag: Boolean =
+    record.getReadUnmappedFlag
+
 }
