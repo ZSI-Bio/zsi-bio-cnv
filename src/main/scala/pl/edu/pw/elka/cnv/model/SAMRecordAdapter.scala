@@ -23,6 +23,12 @@ class SAMRecordAdapter(record: SAMRecord) extends CNVRecord with ConvertionUtils
   override def getReadLength: Int =
     record.getReadLength
 
+  override def getBaseQualitiesLength: Int =
+    record.getBaseQualities.length
+
+  override def getAlignmentBlocksLength: Int =
+    record.getAlignmentBlocks.size
+
   override def getNotPrimaryAlignmentFlag: Boolean =
     record.getNotPrimaryAlignmentFlag
 

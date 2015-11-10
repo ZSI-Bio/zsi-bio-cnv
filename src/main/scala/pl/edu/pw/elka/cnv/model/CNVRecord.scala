@@ -17,6 +17,10 @@ trait CNVRecord extends Serializable {
 
   def getReadLength: Int
 
+  def getBaseQualitiesLength: Int
+
+  def getAlignmentBlocksLength: Int
+
   def getNotPrimaryAlignmentFlag: Boolean
 
   def getReadFailsVendorQualityCheckFlag: Boolean
