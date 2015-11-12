@@ -69,7 +69,20 @@ trait FileUtils extends ConvertionUtils {
     Source.fromFile(path).getLines.zipWithIndex foreach {
       case (line, regionId) => line.split("\t") match {
         case Array(chr, start, end, _*) =>
-          result(regionId.toInt) = ((chrStrToInt(chr), start.toInt, end.toInt))
+          result(regionId) = ((chrStrToInt(chr), start.toInt, end.toInt))
+      }
+    }
+    result
+  }
+
+  def readIntervalFile(path: String): mutable.HashMap[Int, (Int, Int, Int)] = {
+    val result = new mutable.HashMap[Int, (Int, Int, Int)]
+    Source.fromFile(path).getLines.zipWithIndex foreach {
+      case (line, regionId) => line.split(":") match {
+        case Array(chr, coords) => coords.split("-") match {
+          case Array(start, end) =>
+            result(regionId) = ((chrStrToInt(chr), start.toInt, end.toInt))
+        }
       }
     }
     result
