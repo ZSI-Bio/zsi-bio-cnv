@@ -1,7 +1,9 @@
 package pl.edu.pw.elka.cnv.model
 
-import htsjdk.samtools.{Cigar, SAMRecord}
+import htsjdk.samtools.{AlignmentBlock, Cigar, SAMRecord}
 import pl.edu.pw.elka.cnv.utils.ConvertionUtils
+
+import scala.collection.JavaConverters._
 
 /**
  * Created by mariusz-macbook on 07/11/15.
@@ -17,17 +19,20 @@ class SAMRecordAdapter(record: SAMRecord) extends CNVRecord with ConvertionUtils
   override def getAlignmentEnd: Int =
     record.getAlignmentEnd
 
-  override def getCigar: Cigar =
-    record.getCigar
+  override def getMappingQuality: Int =
+    record.getMappingQuality
 
   override def getReadLength: Int =
     record.getReadLength
 
-  override def getBaseQualitiesLength: Int =
-    record.getBaseQualities.length
+  override def getCigar: Cigar =
+    record.getCigar
 
-  override def getAlignmentBlocksLength: Int =
-    record.getAlignmentBlocks.size
+  override def getBaseQualities: Array[Byte] =
+    record.getBaseQualities
+
+  override def getAlignmentBlocks: Array[AlignmentBlock] =
+    record.getAlignmentBlocks.asScala.toArray
 
   override def getNotPrimaryAlignmentFlag: Boolean =
     record.getNotPrimaryAlignmentFlag

@@ -1,6 +1,6 @@
 package pl.edu.pw.elka.cnv.model
 
-import htsjdk.samtools.Cigar
+import htsjdk.samtools.{AlignmentBlock, Cigar}
 
 /**
  * Created by mariusz-macbook on 07/11/15.
@@ -13,13 +13,15 @@ trait CNVRecord extends Serializable {
 
   def getAlignmentEnd: Int
 
-  def getCigar: Cigar
+  def getMappingQuality: Int
 
   def getReadLength: Int
 
-  def getBaseQualitiesLength: Int
+  def getCigar: Cigar
 
-  def getAlignmentBlocksLength: Int
+  def getBaseQualities: Array[Byte]
+
+  def getAlignmentBlocks: Array[AlignmentBlock]
 
   def getNotPrimaryAlignmentFlag: Boolean
 
