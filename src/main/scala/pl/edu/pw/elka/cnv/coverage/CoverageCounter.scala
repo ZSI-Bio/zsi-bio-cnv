@@ -3,6 +3,7 @@ package pl.edu.pw.elka.cnv.coverage
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
+import pl.edu.pw.elka.cnv.filter.ReadFilter
 import pl.edu.pw.elka.cnv.model.CNVRecord
 import pl.edu.pw.elka.cnv.utils.ConvertionUtils
 
@@ -20,7 +21,7 @@ import scala.collection.mutable.ArrayBuffer
  * @param reduceWorkers Number of reduce workers to be used (default value - 12).
  */
 class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], reads: RDD[(Int, CNVRecord)],
-                      parseCigar: Boolean = false, countingMode: Int = CountingMode.COUNT_WHEN_STARTS, reduceWorkers: Int = 12)
+                      readFilters: Array[ReadFilter] = Array(), parseCigar: Boolean = false, countingMode: Int = CountingMode.COUNT_WHEN_STARTS, reduceWorkers: Int = 12)
   extends Serializable with ConvertionUtils {
 
   /**
@@ -31,14 +32,22 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
     bedFileToChromosomesMap(bedFile.value)
   }
 
+  private val filteredReads: RDD[(Int, CNVRecord)] =
+    if (readFilters.isEmpty) reads
+    else reads filter {
+      case (_, read) => readFilters forall {
+        filter => !filter.filterOut(read)
+      }
+    }
+
   /**
    * Method for calculation of coverage based on regions and reads given in class constructor.
    * It returns coverage in an internal representation for efficiency purposes. One can convert it using [[coverageToRegionCoverage]] method.
    *
    * @return RDD of (coverageId, coverage). For more information about coverageId see [[encodeCoverageId]] method.
    */
-  def calculateCoverage: RDD[(Long, Int)] =
-    reads.mapPartitions(partition => {
+  def calculateReadCoverage: RDD[(Long, Int)] =
+    filteredReads.mapPartitions(partition => {
       val regionsCountMap = new mutable.HashMap[Long, Int]
 
       for ((sampleId, read) <- partition)
@@ -55,6 +64,32 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
                     regionsCountMap(coverageId) = 1
                   else
                     regionsCountMap(coverageId) += 1
+                }
+          }
+        }
+
+      regionsCountMap.iterator
+    }).reduceByKey(_ + _, reduceWorkers)
+
+  def calculateBaseCoverage: RDD[(Long, Int)] =
+    filteredReads.mapPartitions(partition => {
+      val regionsCountMap = new mutable.HashMap[Long, Int]
+
+      for ((sampleId, read) <- partition)
+        if (chromosomesMap.value.contains(read.getReferenceName)) {
+          val regions = chromosomesMap.value(read.getReferenceName)
+          val blocks = generateBlocks(read)
+          for ((blockStart, blockEnd) <- blocks) {
+            val regionsToCheck = getRegionsToCheck(blockStart, regions)
+            if (regionsToCheck != null)
+              for ((regionId, regionStart, regionEnd) <- regionsToCheck)
+                if (countingCondition(blockStart, blockEnd, regionStart, regionEnd)) {
+                  val coverageId = encodeCoverageId(sampleId, regionId)
+                  val overlappingBases = math.min(blockEnd, regionEnd) - math.max(blockStart, regionStart) + 1
+                  if (!regionsCountMap.contains(coverageId))
+                    regionsCountMap(coverageId) = overlappingBases
+                  else
+                    regionsCountMap(coverageId) += overlappingBases
                 }
           }
         }

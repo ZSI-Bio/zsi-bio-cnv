@@ -22,7 +22,7 @@ class CalculateCoverageJob extends SonarJob with FileUtils {
     }
 
     val counter = new CoverageCounter(sc, bedFile, reads)
-    coverageToRegionCoverage(counter.calculateCoverage)
+    coverageToRegionCoverage(counter.calculateReadCoverage)
   }
 
   override def runPipelineFirstJob(sc: C, jobConfig: Config): RDD[_] =

@@ -19,7 +19,7 @@ class CoverageCounterFunSuite extends SparkFunSuite with Matchers {
     }
 
     val counter = new CoverageCounter(sc, bedFile, reads)
-    val coverage = counter.calculateCoverage.collectAsMap
+    val coverage = counter.calculateReadCoverage.collectAsMap
 
     coverage.keys should have size (80997)
 

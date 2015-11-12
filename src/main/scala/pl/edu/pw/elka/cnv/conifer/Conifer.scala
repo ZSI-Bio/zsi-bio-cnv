@@ -51,7 +51,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    */
   def coverage: RDD[(Int, Iterable[(Int, Int)])] = {
     val counter = new CoverageCounter(sc, bedFile, reads)
-    coverageToRegionCoverage(counter.calculateCoverage)
+    coverageToRegionCoverage(counter.calculateReadCoverage)
   }
 
   /**
