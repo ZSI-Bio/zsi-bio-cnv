@@ -10,11 +10,11 @@ class MalformedReadFilter extends ReadFilter {
 
   override def filterOut(read: CNVRecord): Boolean =
     !checkInvalidAlignmentStart(read) ||
-      !checkInvalidAlignmentEnd(read) ||
-      !checkMismatchingBasesAndQuals(read) ||
-      !checkCigarDisagreesWithAlignment(read) ||
-      !checkSeqStored(read) ||
-      !checkCigarIsSupported(read)
+    !checkInvalidAlignmentEnd(read) ||
+    !checkMismatchingBasesAndQuals(read) ||
+    !checkCigarDisagreesWithAlignment(read) ||
+    !checkSeqStored(read) ||
+    !checkCigarIsSupported(read)
 
   private def checkInvalidAlignmentStart(read: CNVRecord): Boolean =
     if (!read.getReadUnmappedFlag &&
@@ -27,14 +27,14 @@ class MalformedReadFilter extends ReadFilter {
     else true
 
   private def checkMismatchingBasesAndQuals(read: CNVRecord): Boolean =
-    if (read.getReadLength == read.getBaseQualitiesLength) true
+    if (read.getReadLength == read.getBaseQualities.length) true
     else false
 
   private def checkCigarDisagreesWithAlignment(read: CNVRecord): Boolean =
     if (!read.getReadUnmappedFlag &&
       read.getAlignmentStart != -1 &&
       read.getAlignmentStart != 0 &&
-      read.getAlignmentBlocksLength < 0) false
+      read.getAlignmentBlocks.length < 0) false
     else true
 
   private def checkSeqStored(read: CNVRecord): Boolean =
