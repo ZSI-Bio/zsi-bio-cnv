@@ -1,5 +1,6 @@
 package pl.edu.pw.elka.cnv.utils
 
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
@@ -84,9 +85,18 @@ trait ConvertionUtils {
    */
   def coverageToRegionCoverage(coverage: RDD[(Long, Int)]): RDD[(Int, Iterable[(Int, Int)])] =
     coverage map {
-      case (coverageId, coverage) => (decodeCoverageId(coverageId), coverage)
-    } map {
-      case ((sampleId, regionId), coverage) => (regionId, (sampleId, coverage))
+      case (coverageId, coverage) =>
+        val (sampleId, regionId) = decodeCoverageId(coverageId)
+        (regionId, (sampleId, coverage))
+    } groupByKey
+
+  def coverageToMeanRegionCoverage(coverage: RDD[(Long, Int)], bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]]): RDD[(Int, Iterable[(Int, Double)])] =
+    coverage map {
+      case (coverageId, coverage) =>
+        val (sampleId, regionId) = decodeCoverageId(coverageId)
+        val (_, start, end) = bedFile.value(regionId)
+        val meanCoverage = coverage.toDouble / (end - start + 1)
+        (regionId, (sampleId, meanCoverage))
     } groupByKey
 
   /**
