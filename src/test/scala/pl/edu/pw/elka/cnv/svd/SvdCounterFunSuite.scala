@@ -13,10 +13,10 @@ class SvdCounterFunSuite extends SparkFunSuite with Matchers {
 
   sparkTest("calculateSvd test") {
     val bedFile = sc.broadcast {
-      files.readBedFile("resources/data/test_bed_file.txt")
+      files.readBedFile(getClass.getResource("/test_bed_file.txt").getPath)
     }
 
-    val zrpkms = sc.objectFile[(Int, Array[Double])]("resources/data/zrpkms.txt")
+    val zrpkms = sc.objectFile[(Int, Array[Double])](getClass.getResource("/zrpkms.txt").getPath)
     val counter = new SvdCounter(bedFile, zrpkms, 1)
     val matrices = counter.calculateSvd.collect
 

@@ -11,7 +11,7 @@ import pl.edu.pw.elka.cnv.utils.FileUtils
 class ZrpkmsCounterFunSuite extends SparkFunSuite with Matchers {
 
   sparkTest("calculateZrpkms test") {
-    val rpkms = sc.objectFile[(Int, Array[Double])]("resources/data/rpkms.txt")
+    val rpkms = sc.objectFile[(Int, Array[Double])](getClass.getResource("/rpkms.txt").getPath)
     val counter = new ZrpkmsCounter(rpkms, 1.0)
     val zrpkms = counter.calculateZrpkms.collectAsMap
 

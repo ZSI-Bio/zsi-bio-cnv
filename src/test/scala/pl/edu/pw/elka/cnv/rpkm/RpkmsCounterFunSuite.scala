@@ -12,17 +12,17 @@ class RpkmsCounterFunSuite extends SparkFunSuite with Matchers {
   val files = new FileUtils with Serializable
 
   sparkTest("calculateRpkms test") {
-    val samples = files.scanForSamples("resources/data")
+    val samples = files.scanForSamples(getClass.getResource("/").getPath)
 
     val reads1 = files.loadReads(sc, samples).map(r => (0, r._2))
     val reads2 = files.loadReads(sc, samples).map(r => (1, r._2))
     val reads3 = files.loadReads(sc, samples).map(r => (2, r._2))
 
     val bedFile = sc.broadcast {
-      files.readBedFile("resources/data/test_bed_file.txt")
+      files.readBedFile(getClass.getResource("/test_bed_file.txt").getPath)
     }
 
-    val coverage = sc.objectFile[(Int, Iterable[(Int, Int)])]("resources/data/coverage.txt")
+    val coverage = sc.objectFile[(Int, Iterable[(Int, Int)])](getClass.getResource("/coverage.txt").getPath)
     val counter = new RpkmsCounter(reads1.union(reads2).union(reads3), bedFile, coverage)
     val rpkms = counter.calculateRpkms.collectAsMap
 
