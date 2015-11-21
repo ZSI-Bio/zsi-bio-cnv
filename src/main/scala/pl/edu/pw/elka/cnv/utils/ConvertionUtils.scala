@@ -7,9 +7,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Created by mariusz-macbook on 26/04/15.
- *
- * Trait for doing various data convertions.
+ * Trait for doing various data conversions.
  */
 trait ConvertionUtils {
 
@@ -57,7 +55,7 @@ trait ConvertionUtils {
     val result = new mutable.HashMap[Int, Int]
     bedFile foreach {
       case (regionId, _, start, end) =>
-        result(regionId) = (end - start)
+        result(regionId) = (end - start + 1)
     }
     result
   }
@@ -90,6 +88,12 @@ trait ConvertionUtils {
         (regionId, (sampleId, coverage))
     } groupByKey
 
+  /**
+   * Method for converting internal coverage representation used for efficiency purposes into RDD optimized for searching by region ID.
+   *
+   * @param coverage RDD of (coverageId, coverage) containing coverage in internal representation.
+   * @return RDD of (regionId, (sampleId, coverage)) containing mean coverage optimized for searching by region ID.
+   */
   def coverageToMeanRegionCoverage(coverage: RDD[(Long, Int)], bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]]): RDD[(Int, Iterable[(Int, Double)])] =
     coverage map {
       case (coverageId, coverage) =>

@@ -58,9 +58,9 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
     output.keys should have size (3)
 
     output.keys should contain theSameElementsAs Array(2429, 101874, 179177)
-    output(2429) should be(19204106 - 19203909)
-    output(101874) should be(113928282 - 113928069)
-    output(179177) should be(47116753 - 47115835)
+    output(2429) should be(19204106 - 19203909 + 1)
+    output(101874) should be(113928282 - 113928069 + 1)
+    output(179177) should be(47116753 - 47115835 + 1)
   }
 
   test("bedFileToRegionCoords test") {

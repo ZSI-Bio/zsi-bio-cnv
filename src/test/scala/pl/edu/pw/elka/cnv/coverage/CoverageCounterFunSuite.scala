@@ -11,14 +11,14 @@ class CoverageCounterFunSuite extends SparkFunSuite with Matchers {
 
   val files = new FileUtils with Serializable
 
-  sparkTest("calculateCoverage test") {
+  sparkTest("calculateReadCoverage test") {
     val samples = files.scanForSamples("resources/data")
     val reads = files.loadReads(sc, samples)
     val bedFile = sc.broadcast {
       files.readBedFile("resources/data/test_bed_file.txt")
     }
 
-    val counter = new CoverageCounter(sc, bedFile, reads)
+    val counter = new CoverageCounter(sc, bedFile, reads, Array.empty, false, CountingMode.COUNT_WHEN_STARTS)
     val coverage = counter.calculateReadCoverage.collectAsMap
 
     coverage.keys should have size (80997)

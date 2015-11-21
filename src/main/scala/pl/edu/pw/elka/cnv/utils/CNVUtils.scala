@@ -1,8 +1,6 @@
 package pl.edu.pw.elka.cnv.utils
 
 /**
- * Created by mariusz-macbook on 29/07/15.
- *
  * Trait containing common CNV detection methods.
  */
 trait CNVUtils {

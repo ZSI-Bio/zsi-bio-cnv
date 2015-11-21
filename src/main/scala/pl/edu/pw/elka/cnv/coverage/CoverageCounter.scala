@@ -16,12 +16,13 @@ import scala.collection.mutable.ArrayBuffer
  * @param sc Apache Spark context.
  * @param bedFile Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
  * @param reads RDD of (sampleId, read) containing all of the reads to be analyzed.
- * @param parseCigar Flag indicating whether or not to parse a cigar string (default value - false).
- * @param countingMode Mode of coverage calculation to be used (default value - CountingMode.COUNT_WHEN_STARTS).
+ * @param readFilters Array of filters to be applied to reads before start of calculation.
+ * @param parseCigar Flag indicating whether or not to parse a cigar string.
+ * @param countingMode Mode of coverage calculation to be used.
  * @param reduceWorkers Number of reduce workers to be used (default value - 12).
  */
 class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], reads: RDD[(Int, CNVRecord)],
-                      readFilters: Array[ReadFilter] = Array(), parseCigar: Boolean = false, countingMode: Int = CountingMode.COUNT_WHEN_STARTS, reduceWorkers: Int = 12)
+                      readFilters: Array[ReadFilter], parseCigar: Boolean, countingMode: Int, reduceWorkers: Int = 12)
   extends Serializable with ConvertionUtils {
 
   /**
@@ -32,6 +33,9 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
     bedFileToChromosomesMap(bedFile.value)
   }
 
+  /**
+   * RDD of (sampleId, read) containing all of the filtered reads to be analyzed.
+   */
   private val filteredReads: RDD[(Int, CNVRecord)] =
     if (readFilters.isEmpty) reads
     else reads filter {
@@ -71,6 +75,12 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
       regionsCountMap.iterator
     }).reduceByKey(_ + _, reduceWorkers)
 
+  /**
+   * Method for calculation of depth of coverage based on regions and reads given in class constructor.
+   * It returns coverage in an internal representation for efficiency purposes. One can convert it using [[coverageToMeanRegionCoverage]] method.
+   *
+   * @return RDD of (coverageId, coverage). For more information about coverageId see [[encodeCoverageId]] method.
+   */
   def calculateBaseCoverage: RDD[(Long, Int)] =
     filteredReads.mapPartitions(partition => {
       val regionsCountMap = new mutable.HashMap[Long, Int]
@@ -98,12 +108,12 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
     }).reduceByKey(_ + _, reduceWorkers)
 
   /**
-   * Method returning flag that determines whether or not given base covers given region according to a chosen counting mode.
+   * Method returning flag that determines whether or not given block covers given region according to a chosen counting mode.
    *
-   * @param baseStart Starting position of a given base.
-   * @param baseEnd Ending position of a given base.
+   * @param blockStart Starting position of a given block.
+   * @param blockEnd Ending position of a given block.
    * @param regionStart Starting position of a given region.
-   * @param regionEnd Starting position of a given region.
+   * @param regionEnd Ending position of a given region.
    * @return Boolean flag.
    */
   private def countingCondition(blockStart: Int, blockEnd: Int, regionStart: Int, regionEnd: Int): Boolean =
@@ -122,14 +132,14 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
     }
 
   /**
-   * Method returning regions that a given base may overlap. It optimizes calculation of coverage by narrowing area of interest to nearby regions.
+   * Method returning regions that a given block may overlap. It optimizes calculation of coverage by narrowing area of interest to nearby regions.
    *
-   * @param baseStart Starting position of a given base.
+   * @param blockStart Starting position of a given block.
    * @param regions Array of (regionId, start end) optimized for searching by position.
    * @return Array of (regionId, start end) containing nearby regions.
    */
-  private def getRegionsToCheck(baseStart: Int, regions: Array[ArrayBuffer[(Int, Int, Int)]]): ArrayBuffer[(Int, Int, Int)] = {
-    val startId = baseStart / 10000
+  private def getRegionsToCheck(blockStart: Int, regions: Array[ArrayBuffer[(Int, Int, Int)]]): ArrayBuffer[(Int, Int, Int)] = {
+    val startId = blockStart / 10000
     var result = regions(startId)
 
     if (startId > 0 && regions(startId - 1) != null)
@@ -140,25 +150,15 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
   }
 
   /**
-   * Method generating bases from given read by parsing a cigar string. If parseCigar is set to false it simply returns (readStart, readEnd).
+   * Method generating blocks from given read by parsing a cigar string.
+   * If parseCigar is set to false it simply returns (readStart, readEnd).
    *
    * @param read Read to be analyzed.
-   * @return Array of (baseStart, baseEnd) containing all of the bases generated from a given read.
+   * @return Array of (blockStart, blockEnd) containing all of the blocks generated from a given read.
    */
   private def generateBlocks(read: CNVRecord): Array[(Int, Int)] =
-    if (parseCigar) genBasesFromCigar(read)
-    else Array((read.getAlignmentStart, read.getAlignmentEnd))
-
-  /**
-   * Method generating bases by parsing a cigar string.
-   *
-   * @param alignStart Alignment start position of a read.
-   * @param cigar Cigar string of a read.
-   * @return Array of (baseStart, baseEnd) containing all of the bases generated from a given cigar string.
-   */
-  private def genBasesFromCigar(read: CNVRecord): Array[(Int, Int)] =
-    read.getAlignmentBlocks map {
+    if (parseCigar) read.getAlignmentBlocks map {
       block => (block.getReferenceStart, block.getReferenceStart + block.getLength - 1)
-    }
+    } else Array((read.getAlignmentStart, read.getAlignmentEnd))
 
 }

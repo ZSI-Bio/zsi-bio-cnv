@@ -3,7 +3,7 @@ package pl.edu.pw.elka.cnv.filter
 import pl.edu.pw.elka.cnv.model.CNVRecord
 
 /**
- * Created by mariusz-macbook on 08/11/15.
+ * This filter recognizes the SAM flag corresponding to the duplication of a given read.
  */
 class DuplicateReadFilter extends ReadFilter {
 

@@ -2,7 +2,7 @@ package pl.edu.pw.elka.cnv.integration
 
 import com.typesafe.config.Config
 import org.apache.spark.rdd.RDD
-import pl.edu.pw.elka.cnv.coverage.CoverageCounter
+import pl.edu.pw.elka.cnv.coverage.{CountingMode, CoverageCounter}
 import pl.edu.pw.elka.cnv.utils.FileUtils
 import spark.jobserver.{SparkJobValid, SparkJobValidation}
 
@@ -21,7 +21,7 @@ class CalculateCoverageJob extends SonarJob with FileUtils {
       readBedFile(bedFilePath)
     }
 
-    val counter = new CoverageCounter(sc, bedFile, reads)
+    val counter = new CoverageCounter(sc, bedFile, reads, Array.empty, false, CountingMode.COUNT_WHEN_STARTS)
     coverageToRegionCoverage(counter.calculateReadCoverage)
   }
 

@@ -14,16 +14,14 @@ import scala.collection.mutable
 import scala.io.Source
 
 /**
- * Created by mariusz-macbook on 26/04/15.
- *
- * Trait for scanning and loading data from BED and BAM files.
+ * Trait for scanning and loading data from BED, BAM and ADAM files.
  */
 trait FileUtils extends ConvertionUtils {
 
   /**
-   * Method for scanning for BAM files under given path.
+   * Method for scanning for BAM and ADAM files under given path.
    *
-   * @param path Path to folder containing BAM files.
+   * @param path Path to folder containing BAM or ADAM files.
    * @return Map of (sampleId, samplePath) containing all of the found BAM files.
    */
   def scanForSamples(path: String): Map[Int, String] =
@@ -75,6 +73,12 @@ trait FileUtils extends ConvertionUtils {
     result
   }
 
+  /**
+   * Method for loading data from interval file.
+   *
+   * @param path Path to folder containing interval file.
+   * @return Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
+   */
   def readIntervalFile(path: String): mutable.HashMap[Int, (Int, Int, Int)] = {
     val result = new mutable.HashMap[Int, (Int, Int, Int)]
     Source.fromFile(path).getLines.zipWithIndex foreach {

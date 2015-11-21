@@ -1,4 +1,4 @@
-package pl.edu.pw.elka.cnv.conifer
+package pl.edu.pw.elka.cnv.application
 
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
@@ -11,10 +11,13 @@ import pl.edu.pw.elka.cnv.utils.FileUtils
 import scala.collection.mutable
 
 /**
- * Created by mariusz-macbook on 20/11/15.
+ * Main class for calculation of DepthOfCoverage.
+ *
+ * @param sc Apache Spark context.
+ * @param bedFilePath Path to folder containing BED file.
+ * @param bamFilesPath Path to folder containing BAM files.
  */
-class DepthOfCoverage(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String)
-  extends Serializable with FileUtils {
+class DepthOfCoverage(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String) extends Serializable with FileUtils {
 
   /**
    * Map of (sampleId, samplePath) containing all of the found BAM files.
@@ -33,6 +36,11 @@ class DepthOfCoverage(@transient sc: SparkContext, bedFilePath: String, bamFiles
     readIntervalFile(bedFilePath)
   }
 
+  /**
+   * Method that calculates DepthOfCoverage based on files given as input.
+   *
+   * @return RDD of (regionId, (sampleId, coverage)) containing calculated coverage.
+   */
   def calculate: RDD[(Int, Iterable[(Int, Double)])] = {
     val filters = Array(
       new NotPrimaryAlignmentFilter,

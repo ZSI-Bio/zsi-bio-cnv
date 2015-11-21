@@ -7,7 +7,9 @@ import pl.edu.pw.elka.cnv.utils.ConvertionUtils
 import scala.collection.JavaConverters._
 
 /**
- * Created by mariusz-macbook on 07/11/15.
+ * Class that adapts AlignmentRecord to interface required by this application.
+ * It implements adapter design pattern that works as a bridge
+ * between two incompatible interfaces: SAMRecord and AlignmentRecord.
  */
 class AlignmentRecordAdapter(record: AlignmentRecord) extends CNVRecord with ConvertionUtils {
 

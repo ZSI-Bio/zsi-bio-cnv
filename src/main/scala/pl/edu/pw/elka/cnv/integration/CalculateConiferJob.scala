@@ -2,7 +2,7 @@ package pl.edu.pw.elka.cnv.integration
 
 import com.typesafe.config.Config
 import org.apache.spark.rdd.RDD
-import pl.edu.pw.elka.cnv.conifer.Conifer
+import pl.edu.pw.elka.cnv.application.Conifer
 import spark.jobserver.{SparkJobValid, SparkJobValidation}
 
 /**

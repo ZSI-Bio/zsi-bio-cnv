@@ -1,11 +1,11 @@
-package pl.edu.pw.elka.cnv.conifer
+package pl.edu.pw.elka.cnv.application
 
 import org.apache.commons.math3.linear.RealMatrix
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.caller.Caller
-import pl.edu.pw.elka.cnv.coverage.CoverageCounter
+import pl.edu.pw.elka.cnv.coverage.{CountingMode, CoverageCounter}
 import pl.edu.pw.elka.cnv.model.CNVRecord
 import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
 import pl.edu.pw.elka.cnv.svd.SvdCounter
@@ -50,7 +50,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    * @return RDD of (regionId, (sampleId, coverage)) containing calculated coverage.
    */
   def coverage: RDD[(Int, Iterable[(Int, Int)])] = {
-    val counter = new CoverageCounter(sc, bedFile, reads)
+    val counter = new CoverageCounter(sc, bedFile, reads, Array.empty, false, CountingMode.COUNT_WHEN_STARTS)
     coverageToRegionCoverage(counter.calculateReadCoverage)
   }
 
@@ -129,16 +129,16 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
 
     System.console().printf(
       "Coverage: " + (coverageTime - start) + " ms\n" +
-      "RPKM: " + (rpkmTime - coverageTime) + " ms\n" +
-      "ZRPKM: " + (zrpkmTime - rpkmTime) + " ms\n" +
-      "SVD: " + (svdTime - zrpkmTime) + " ms\n" +
-      "Calling: " + (callTime - svdTime) + " ms\n"
+        "RPKM: " + (rpkmTime - coverageTime) + " ms\n" +
+        "ZRPKM: " + (zrpkmTime - rpkmTime) + " ms\n" +
+        "SVD: " + (svdTime - zrpkmTime) + " ms\n" +
+        "Calling: " + (callTime - svdTime) + " ms\n"
     )
 
     System.console().printf(
       "Coverage & RPKM: " + (rpkmTime - start) + " ms\n" +
-      "ZRPKM & SVD: " + (svdTime - rpkmTime) + " ms\n" +
-      "Calling: " + (callTime - svdTime) + " ms\n"
+        "ZRPKM & SVD: " + (svdTime - rpkmTime) + " ms\n" +
+        "Calling: " + (callTime - svdTime) + " ms\n"
     )
 
     calculatedCalls

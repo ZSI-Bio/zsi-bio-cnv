@@ -1,9 +1,10 @@
-package pl.edu.pw.elka.cnv.conifer
+package pl.edu.pw.elka.cnv
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
+import pl.edu.pw.elka.cnv.application.{Conifer, Coverage, DepthOfCoverage}
 
 object Main {
 

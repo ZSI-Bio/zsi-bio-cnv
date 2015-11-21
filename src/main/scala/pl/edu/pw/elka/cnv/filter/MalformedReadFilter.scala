@@ -4,7 +4,7 @@ import htsjdk.samtools.CigarOperator
 import pl.edu.pw.elka.cnv.model.CNVRecord
 
 /**
- * Created by mariusz-macbook on 09/11/15.
+ * This read filter will filter out reads that are grossly malformed.
  */
 class MalformedReadFilter extends ReadFilter {
 

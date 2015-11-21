@@ -99,7 +99,7 @@ class ChrCaller(regions: Array[Int], matrix: RealMatrix, threshold: Double) exte
    *
    * @param breakPoints Breakpoints of given type.
    * @param column One column from input matrix.
-   * @param state Flag indicating what king of calls to calculate.
+   * @param state Flag indicating what kind of calls to calculate.
    * @return Calculated calls.
    */
   private def getCalls(breakPoints: Array[(Int, Int)], column: Array[Double], state: String): Array[(Int, Int, String)] = {

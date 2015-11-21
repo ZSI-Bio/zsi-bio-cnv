@@ -4,7 +4,13 @@ import htsjdk.samtools.CigarOperator
 import pl.edu.pw.elka.cnv.model.CNVRecord
 
 /**
- * Created by mariusz-macbook on 08/11/15.
+ * This read filter will filter out the following cases:
+ * - different length and cigar length
+ * - hard/soft clips in the middle of the cigar
+ * - starting with deletions (with or without preceding clips)
+ * - ending in deletions (with or without follow-up clips)
+ * - fully hard or soft clipped
+ * - consecutive indels in the cigar (II, DD, ID or DI)
  */
 class BadCigarFilter extends ReadFilter {
 

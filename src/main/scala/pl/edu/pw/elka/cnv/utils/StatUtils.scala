@@ -1,8 +1,6 @@
 package pl.edu.pw.elka.cnv.utils
 
 /**
- * Created by mariusz-macbook on 26/04/15.
- *
  * Trait for doing statistical analysis.
  */
 trait StatUtils {
