@@ -105,22 +105,42 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    */
   def calculate: RDD[(Int, Int, Int, Int, String)] = {
 
+    val start = System.currentTimeMillis
+
     // 1. Calculate coverage
     val calculatedCoverage = coverage
+    val coverageTime = System.currentTimeMillis
 
-    // 2. Calculare RPKM values
+    // 2. Calculate RPKM values
     val calculatedRpkms = rpkms(calculatedCoverage)
+    val rpkmTime = System.currentTimeMillis
 
     // 3. Calculate ZRPKM values
     val calculatedZrpkms = zrpkms(calculatedRpkms)
+    val zrpkmTime = System.currentTimeMillis
 
     // 4. Calculate SVD-ZRPKM values
     val calculatedMatrices = svd(calculatedZrpkms)
+    val svdTime = System.currentTimeMillis
 
     // 5. Make calls
     val calculatedCalls = call(calculatedMatrices)
+    val callTime = System.currentTimeMillis
 
-    // 6. Return detected CNV mutations
+    System.console().printf(
+      "Coverage: " + (coverageTime - start) + " ms\n" +
+      "RPKM: " + (rpkmTime - coverageTime) + " ms\n" +
+      "ZRPKM: " + (zrpkmTime - rpkmTime) + " ms\n" +
+      "SVD: " + (svdTime - zrpkmTime) + " ms\n" +
+      "Calling: " + (callTime - svdTime) + " ms\n"
+    )
+
+    System.console().printf(
+      "Coverage & RPKM: " + (rpkmTime - start) + " ms\n" +
+      "ZRPKM & SVD: " + (svdTime - rpkmTime) + " ms\n" +
+      "Calling: " + (callTime - svdTime) + " ms\n"
+    )
+
     calculatedCalls
   }
 
