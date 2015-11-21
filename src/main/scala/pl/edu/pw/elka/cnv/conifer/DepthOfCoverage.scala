@@ -33,7 +33,7 @@ class DepthOfCoverage(@transient sc: SparkContext, bedFilePath: String, bamFiles
     readIntervalFile(bedFilePath)
   }
 
-  def calculate: RDD[(Int, Iterable[(Int, Int)])] = {
+  def calculate: RDD[(Int, Iterable[(Int, Double)])] = {
     val filters = Array(
       new NotPrimaryAlignmentFilter,
       new FailsVendorQualityCheckFilter,
