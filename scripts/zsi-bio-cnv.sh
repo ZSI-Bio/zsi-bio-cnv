@@ -66,50 +66,50 @@ Arguments for Conifer:
 }
 
 checkArgumentsAndRunCoverage() {
-    if [ -z ${bedFile} ]; then
-        echo "Missing argument: --bedFile. Exiting ..."
-    elif [ -z ${bamFiles} ]; then
-        echo "Missing argument: --bamFiles. Exiting ..."
-    elif [ -z ${output} ]; then
-        echo "Missing argument: --output. Exiting ..."
+    if [ -z $bedFile ]; then
+        echo "Missing argument: --bedFile. Exiting!"
+    elif [ -z $bamFiles ]; then
+        echo "Missing argument: --bamFiles. Exiting!"
+    elif [ -z $output ]; then
+        echo "Missing argument: --output. Exiting!"
     else
-        spark-submit --properties-file ${conf} ${jar} ${app} ${bedFile} ${bamFiles} ${output}
+        spark-submit --properties-file $conf $jar $app $bedFile $bamFiles $output
     fi
 }
 
 checkArgumentsAndRunDepthOfCoverage() {
-    if [ -z ${bedFile} ]; then
+    if [ -z $bedFile ]; then
         echo "Missing argument: --bedFile. Exiting!"
-    elif [ -z ${bamFiles} ]; then
+    elif [ -z $bamFiles ]; then
         echo "Missing argument: --bamFiles. Exiting!"
-    elif [ -z ${output} ]; then
+    elif [ -z $output ]; then
         echo "Missing argument: --output. Exiting!"
     else
-        spark-submit --properties-file ${conf} ${jar} ${app} ${bedFile} ${bamFiles} ${output}
+        spark-submit --properties-file $conf $jar $app $bedFile $bamFiles $output
     fi
 }
 
 checkArgumentsAndRunConifer() {
-    if [ -z ${bedFile} ]; then
+    if [ -z $bedFile ]; then
         echo "Missing argument: --bedFile. Exiting!"
-    elif [ -z ${bamFiles} ]; then
+    elif [ -z $bamFiles ]; then
         echo "Missing argument: --bamFiles. Exiting!"
-    elif [ -z ${output} ]; then
+    elif [ -z $output ]; then
         echo "Missing argument: --output. Exiting!"
     else
-        if [ -z ${minMedian} ]; then
+        if [ -z $minMedian ]; then
             echo "Missing argument: --minMedian. Using default value: 1.0!"
             minMedian=1.0
         fi
-        if [ -z ${svd} ]; then
+        if [ -z $svd ]; then
             echo "Missing argument: --svd. Using default value: 12!"
             svd=12
         fi
-        if [ -z ${threshold} ]; then
+        if [ -z $threshold ]; then
             echo "Missing argument: --threshold. Using default value: 1.5!"
             threshold=1.5
         fi
-        spark-submit --properties-file ${conf} ${jar} ${app} ${bedFile} ${bamFiles} ${minMedian} ${svd} ${threshold} ${output}
+        spark-submit --properties-file $conf $jar $app $bedFile $bamFiles $minMedian $svd $threshold $output
     fi
 }
 
@@ -131,11 +131,11 @@ loadArguments() {
 }
 
 setDefaults() {
-    if [ -z ${jar} ]; then
+    if [ -z $jar ]; then
         echo "Missing argument: --jar. Using default value: `pwd`/zsi-bio-cnv.jar!"
         jar="`pwd`/zsi-bio-cnv.jar"
     fi
-    if [ -z ${conf} ]; then
+    if [ -z $conf ]; then
         echo "Missing argument: --conf. Using default value: `pwd`/application.conf!"
         conf="`pwd`/application.conf"
     fi
@@ -146,16 +146,16 @@ if [ $# -le 0 ]; then
 else
     loadArguments $@
     setDefaults
-    if [ -z ${app} ]; then
+    if [ -z $app ]; then
         echo "Missing argument: --app. Exiting!"
-    elif [ ${app} = "Coverage" ]; then
+    elif [ $app = "Coverage" ]; then
         checkArgumentsAndRunCoverage
-    elif [ ${app} = "DepthOfCoverage" ]; then
+    elif [ $app = "DepthOfCoverage" ]; then
         checkArgumentsAndRunDepthOfCoverage
-    elif [ ${app} = "Conifer" ]; then
+    elif [ $app = "Conifer" ]; then
         checkArgumentsAndRunConifer
     else
-        echo "Unknown application mode: ${appMode}."
+        echo "Unknown application mode: $app."
         echo "Must be one of: Coverage, DepthOfCoverage, Conifer."
     fi
 fi
