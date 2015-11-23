@@ -25,7 +25,7 @@ resolvers ++= Seq(
 parallelExecution in Test := false
 
 assemblyJarName in assembly := "zsi-bio-cnv.jar"
-mainClass in assembly := Some("pl.edu.pw.elka.cnv.conifer.Main")
+mainClass in assembly := Some("pl.edu.pw.elka.cnv.Main")
 assemblyMergeStrategy in assembly := {
   case PathList("org", "apache", "hadoop", "yarn", xs@_*) => MergeStrategy.first
   case PathList("org", "apache", "commons", xs@_*) => MergeStrategy.first

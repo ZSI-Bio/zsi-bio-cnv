@@ -2,6 +2,7 @@
 
 data="/path/to/data"
 results="/path/to/results"
+xhmm="/path/to/xhmm"
 
 start=$SECONDS
 echo "Starting step 1"
@@ -33,7 +34,7 @@ echo "Finishing step 1"
 step1=$SECONDS
 echo "Starting step 2"
 
-(./xhmm --mergeGATKdepths -o $results/DATA.RD.txt \
+($xhmm/xhmm --mergeGATKdepths -o $results/DATA.RD.txt \
 --GATKdepths $results/group1.DATA.sample_interval_summary \
 --GATKdepths $results/group2.DATA.sample_interval_summary \
 --GATKdepths $results/group3.DATA.sample_interval_summary) \
@@ -43,7 +44,7 @@ echo "Finishing step 2"
 step2=$SECONDS
 echo "Starting step 3"
 
-(./xhmm --matrix -r $results/DATA.RD.txt --centerData \
+($xhmm/xhmm --matrix -r $results/DATA.RD.txt --centerData \
 --centerType target -o $results/DATA.filtered_centered.RD.txt \
 --outputExcludedTargets $results/DATA.filtered_centered.RD.txt.filtered_targets.txt \
 --outputExcludedSamples $results/DATA.filtered_centered.RD.txt.filtered_samples.txt \
@@ -54,14 +55,14 @@ echo "Finishing step 3"
 step3=$SECONDS
 echo "Starting step 4"
 
-(./xhmm --PCA -r $results/DATA.filtered_centered.RD.txt \
+($xhmm/xhmm --PCA -r $results/DATA.filtered_centered.RD.txt \
 --PCAfiles $results/DATA.RD_PCA) &> /dev/null
 
 echo "Finishing step 4"
 step4=$SECONDS
 echo "Starting step 5"
 
-(./xhmm --normalize -r $results/DATA.filtered_centered.RD.txt \
+($xhmm/xhmm --normalize -r $results/DATA.filtered_centered.RD.txt \
 --PCAfiles $results/DATA.RD_PCA --normalizeOutput $results/DATA.PCA_normalized.txt \
 --PCnormalizeMethod PVE_mean --PVE_mean_factor 0.7) &> /dev/null
 
@@ -69,7 +70,7 @@ echo "Finishing step 5"
 step5=$SECONDS
 echo "Starting step 6"
 
-(./xhmm --matrix -r $results/DATA.PCA_normalized.txt --centerData --centerType sample \
+($xhmm/xhmm --matrix -r $results/DATA.PCA_normalized.txt --centerData --centerType sample \
 --zScoreData -o $results/DATA.PCA_normalized.filtered.sample_zscores.RD.txt \
 --outputExcludedTargets $results/DATA.PCA_normalized.filtered.sample_zscores.RD.txt.filtered_targets.txt \
 --outputExcludedSamples $results/DATA.PCA_normalized.filtered.sample_zscores.RD.txt.filtered_samples.txt \
@@ -79,7 +80,7 @@ echo "Finishing step 6"
 step6=$SECONDS
 echo "Starting step 7"
 
-(./xhmm --matrix -r $results/DATA.RD.txt \
+($xhmm/xhmm --matrix -r $results/DATA.RD.txt \
 --excludeTargets $results/DATA.filtered_centered.RD.txt.filtered_targets.txt \
 --excludeTargets $results/DATA.PCA_normalized.filtered.sample_zscores.RD.txt.filtered_targets.txt \
 --excludeSamples $results/DATA.filtered_centered.RD.txt.filtered_samples.txt \
@@ -90,7 +91,7 @@ echo "Finishing step 7"
 step7=$SECONDS
 echo "Starting step 8"
 
-(./xhmm --discover -p $data/params.txt \
+($xhmm/xhmm --discover -p $data/params.txt \
 -r $results/DATA.PCA_normalized.filtered.sample_zscores.RD.txt \
 -R $results/DATA.same_filtered.RD.txt -c $results/DATA.xcnv \
 -a $results/DATA.aux_xcnv -s $results/DATA) &> /dev/null
@@ -99,7 +100,7 @@ echo "Finishing step 8"
 step8=$SECONDS
 echo "Starting step 9"
 
-(./xhmm --genotype -p $data/params.txt \
+($xhmm/xhmm --genotype -p $data/params.txt \
 -r $results/DATA.PCA_normalized.filtered.sample_zscores.RD.txt \
 -R $results/DATA.same_filtered.RD.txt -g $results/DATA.xcnv \
 -F $data/human_g1k_v37.fasta -v $results/DATA.vcf) &> /dev/null
