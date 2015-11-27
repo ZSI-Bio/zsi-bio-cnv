@@ -2,6 +2,7 @@ package pl.edu.pw.elka.cnv.application
 
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.MetricsContext.rddToInstrumentedRDD
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.coverage.{CountingMode, CoverageCounter}
 import pl.edu.pw.elka.cnv.filter._
@@ -27,7 +28,7 @@ class DepthOfCoverage(@transient sc: SparkContext, bedFilePath: String, bamFiles
   /**
    * RDD of (sampleId, read) containing all of the reads to be analyzed.
    */
-  private val reads: RDD[(Int, CNVRecord)] = loadReads(sc, samples)
+  private val reads: RDD[(Int, CNVRecord)] = loadReads(sc, samples).instrument()
 
   /**
    * Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.

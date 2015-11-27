@@ -3,6 +3,7 @@ package pl.edu.pw.elka.cnv.application
 import org.apache.commons.math3.linear.RealMatrix
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.MetricsContext.rddToInstrumentedRDD
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.caller.Caller
 import pl.edu.pw.elka.cnv.coverage.{CountingMode, CoverageCounter}
@@ -35,7 +36,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   /**
    * RDD of (sampleId, read) containing all of the reads to be analyzed.
    */
-  private val reads: RDD[(Int, CNVRecord)] = loadReads(sc, samples)
+  private val reads: RDD[(Int, CNVRecord)] = loadReads(sc, samples).instrument()
 
   /**
    * Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
@@ -105,41 +106,20 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    */
   def calculate: RDD[(Int, Int, Int, Int, String)] = {
 
-    val start = System.currentTimeMillis
-
     // 1. Calculate coverage
     val calculatedCoverage = coverage
-    val coverageTime = System.currentTimeMillis
 
     // 2. Calculate RPKM values
     val calculatedRpkms = rpkms(calculatedCoverage)
-    val rpkmTime = System.currentTimeMillis
 
     // 3. Calculate ZRPKM values
     val calculatedZrpkms = zrpkms(calculatedRpkms)
-    val zrpkmTime = System.currentTimeMillis
 
     // 4. Calculate SVD-ZRPKM values
     val calculatedMatrices = svd(calculatedZrpkms)
-    val svdTime = System.currentTimeMillis
 
     // 5. Make calls
     val calculatedCalls = call(calculatedMatrices)
-    val callTime = System.currentTimeMillis
-
-    System.console().printf(
-      "Coverage: " + (coverageTime - start) + " ms\n" +
-        "RPKM: " + (rpkmTime - coverageTime) + " ms\n" +
-        "ZRPKM: " + (zrpkmTime - rpkmTime) + " ms\n" +
-        "SVD: " + (svdTime - zrpkmTime) + " ms\n" +
-        "Calling: " + (callTime - svdTime) + " ms\n"
-    )
-
-    System.console().printf(
-      "Coverage & RPKM: " + (rpkmTime - start) + " ms\n" +
-        "ZRPKM & SVD: " + (svdTime - rpkmTime) + " ms\n" +
-        "Calling: " + (callTime - svdTime) + " ms\n"
-    )
 
     calculatedCalls
   }

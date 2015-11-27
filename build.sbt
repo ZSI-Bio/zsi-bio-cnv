@@ -10,6 +10,7 @@ libraryDependencies ++= Seq(
   "org.bdgenomics.adam" % "adam-core_2.10" % "0.18.2"
     exclude("org.scalatest", "scalatest_2.10")
     exclude("org.apache.spark", "spark-core_2.10")
+    exclude("org.bdgenomics.utils", "utils-metrics_2.10")
     exclude("org.seqdoop", "hadoop-bam"),
   "org.bdgenomics.utils" % "utils-misc_2.10" % "0.2.3"
     exclude("org.scalatest", "scalatest_2.10")
