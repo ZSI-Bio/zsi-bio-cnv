@@ -22,7 +22,7 @@ class CalculateSvdJob extends SonarJob with FileUtils {
     val svd = jobConfig.getInt("svd")
 
     val bedFile = sc.broadcast {
-      readBedFile(bedFilePath)
+      readRegionFile(sc, bedFilePath)
     }
 
     val zrpkms = rdd.asInstanceOf[RDD[(Int, Array[Double])]]

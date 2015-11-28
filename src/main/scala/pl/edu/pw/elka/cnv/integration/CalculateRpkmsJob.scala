@@ -24,7 +24,7 @@ class CalculateRpkmsJob extends SonarJob with FileUtils {
     val samples = scanForSamples(bamFilesPath)
     val reads = loadReads(sc, samples)
     val bedFile = sc.broadcast {
-      readBedFile(bedFilePath)
+      readRegionFile(sc, bedFilePath)
     }
 
     val coverage = rdd.asInstanceOf[RDD[(Int, Iterable[(Int, Int)])]]

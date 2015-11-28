@@ -1,7 +1,7 @@
 package pl.edu.pw.elka.cnv.utils
 
-import java.io.File
-
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path, PathFilter}
 import org.apache.hadoop.io.LongWritable
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -11,27 +11,32 @@ import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 import pl.edu.pw.elka.cnv.model.{AlignmentRecordAdapter, CNVRecord, SAMRecordAdapter}
 
 import scala.collection.mutable
-import scala.io.Source
 
 /**
- * Trait for scanning and loading data from BED, BAM and ADAM files.
+ * Trait for scanning and loading data from BED, Interval, BAM and ADAM files.
  */
 trait FileUtils extends ConvertionUtils {
 
   /**
-   * Method for scanning for BAM and ADAM files under given path.
+   * Method for scanning for BAM or ADAM files under given path.
    *
    * @param path Path to folder containing BAM or ADAM files.
-   * @return Map of (sampleId, samplePath) containing all of the found BAM files.
+   * @return Map of (sampleId, samplePath) containing all of the found BAM or ADAM files.
    */
-  def scanForSamples(path: String): Map[Int, String] =
-    new File(path).listFiles.filter(
-      file => file.getName.endsWith(".bam")
-        || file.getName.endsWith(".adam")
-    ).zipWithIndex.map {
+  def scanForSamples(path: String): Map[Int, String] = {
+    val fs = FileSystem.get(new Configuration())
+    fs.listStatus(new Path(path), new PathFilter {
+      override def accept(path: Path): Boolean =
+        path.getName match {
+          case bam if bam.endsWith(".bam") => true
+          case adam if adam.endsWith(".adam") => true
+          case _ => false
+        }
+    }).zipWithIndex map {
       case (file, index) =>
-        (index, file.getPath)
+        (index, file.getPath.toString)
     } toMap
+  }
 
   /**
    * Method for loading all of the samples into single RDD.
@@ -57,39 +62,41 @@ trait FileUtils extends ConvertionUtils {
     }
 
   /**
-   * Method for loading data from BED file.
+   * Method for loading data from BED or Interval file.
    *
-   * @param path Path to folder containing BED file.
+   * @param path Path to BED or Interval file.
    * @return Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
    */
-  def readBedFile(path: String): mutable.HashMap[Int, (Int, Int, Int)] = {
-    val result = new mutable.HashMap[Int, (Int, Int, Int)]
-    Source.fromFile(path).getLines.zipWithIndex foreach {
-      case (line, regionId) => line.split("\t") match {
-        case Array(chr, start, end, _*) =>
-          result(regionId) = ((chrStrToInt(chr), start.toInt, end.toInt))
-      }
-    }
-    result
-  }
+  def readRegionFile(sc: SparkContext, path: String): mutable.HashMap[Int, (Int, Int, Int)] = {
 
-  /**
-   * Method for loading data from interval file.
-   *
-   * @param path Path to folder containing interval file.
-   * @return Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
-   */
-  def readIntervalFile(path: String): mutable.HashMap[Int, (Int, Int, Int)] = {
-    val result = new mutable.HashMap[Int, (Int, Int, Int)]
-    Source.fromFile(path).getLines.zipWithIndex foreach {
-      case (line, regionId) => line.split(":") match {
-        case Array(chr, coords) => coords.split("-") match {
-          case Array(start, end) =>
+    def readBedFile: mutable.HashMap[Int, (Int, Int, Int)] = {
+      val result = new mutable.HashMap[Int, (Int, Int, Int)]
+      sc.textFile(path).collect.zipWithIndex foreach {
+        case (line, regionId) => line.split("\t") match {
+          case Array(chr, start, end, _*) =>
             result(regionId) = ((chrStrToInt(chr), start.toInt, end.toInt))
         }
       }
+      result
     }
-    result
+
+    def readIntervalFile: mutable.HashMap[Int, (Int, Int, Int)] = {
+      val result = new mutable.HashMap[Int, (Int, Int, Int)]
+      sc.textFile(path).collect.zipWithIndex foreach {
+        case (line, regionId) => line.split(":") match {
+          case Array(chr, coords) => coords.split("-") match {
+            case Array(start, end) =>
+              result(regionId) = ((chrStrToInt(chr), start.toInt, end.toInt))
+          }
+        }
+      }
+      result
+    }
+
+    path match {
+      case bed if path.endsWith(".bed") => readBedFile
+      case interval if path.endsWith(".interval_list") => readIntervalFile
+    }
   }
 
 }

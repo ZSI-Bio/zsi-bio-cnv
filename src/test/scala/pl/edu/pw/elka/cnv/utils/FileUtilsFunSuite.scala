@@ -13,16 +13,16 @@ class FileUtilsFunSuite extends SparkFunSuite with Matchers {
   val files = new FileUtils with Serializable
 
   test("scanForSamples test") {
-    val samples = files.scanForSamples(getClass.getResource("/").getPath)
+    val samples = files.scanForSamples(getClass.getResource("/").toString)
 
     samples.keys should have size (1)
     samples.keys should contain theSameElementsAs Array(0)
 
-    samples(0) should be(getClass.getResource("/test_bam_file.bam").getPath)
+    samples(0) should be(getClass.getResource("/test_bam_file.bam").toString)
   }
 
   sparkTest("loadReads test") {
-    val samples = Map(0 -> getClass.getResource("/test_bam_file.bam").getPath)
+    val samples = Map(0 -> getClass.getResource("/test_bam_file.bam").toString)
     val reads = files.loadReads(sc, samples).collect
 
     reads should have size (385721)
@@ -40,8 +40,8 @@ class FileUtilsFunSuite extends SparkFunSuite with Matchers {
     reads(385720)._2.getAlignmentEnd should be(90353)
   }
 
-  test("readBedFile test") {
-    val bedFile = files.readBedFile(getClass.getResource("/test_bed_file.txt").getPath)
+  sparkTest("readRegionFile test") {
+    val bedFile = files.readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
 
     bedFile.keys should have size (223378)
     bedFile.keys.min should be(0)

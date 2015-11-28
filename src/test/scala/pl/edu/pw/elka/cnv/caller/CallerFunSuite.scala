@@ -14,10 +14,10 @@ class CallerFunSuite extends SparkFunSuite with Matchers {
 
   sparkTest("caller call test") {
     val bedFile = sc.broadcast {
-      files.readBedFile(getClass.getResource("/test_bed_file.txt").getPath)
+      files.readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
     }
 
-    val matrices = sc.objectFile[(Int, Array[Int], RealMatrix)](getClass.getResource("/matrices.txt").getPath)
+    val matrices = sc.objectFile[(Int, Array[Int], RealMatrix)](getClass.getResource("/matrices.txt").toString)
     val caller = new Caller(bedFile, matrices, 1.5)
     val calls = caller.call.collect
 

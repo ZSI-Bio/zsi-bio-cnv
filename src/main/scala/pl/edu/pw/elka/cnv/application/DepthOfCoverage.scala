@@ -34,7 +34,7 @@ class DepthOfCoverage(@transient sc: SparkContext, bedFilePath: String, bamFiles
    * Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
    */
   private val bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]] = sc.broadcast {
-    readIntervalFile(bedFilePath)
+    readRegionFile(sc, bedFilePath)
   }
 
   /**

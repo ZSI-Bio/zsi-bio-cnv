@@ -26,7 +26,7 @@ class CalculateCallsJob extends SonarJob with FileUtils {
     val threshold = jobConfig.getDouble("threshold")
 
     val bedFile = sc.broadcast {
-      readBedFile(bedFilePath)
+      readRegionFile(sc, bedFilePath)
     }
 
     val matrices = rdd.asInstanceOf[RDD[(Int, Array[Int], RealMatrix)]]

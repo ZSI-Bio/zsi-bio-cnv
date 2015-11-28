@@ -18,7 +18,7 @@ class CalculateCoverageJob extends SonarJob with FileUtils {
     val samples = scanForSamples(bamFilesPath)
     val reads = loadReads(sc, samples)
     val bedFile = sc.broadcast {
-      readBedFile(bedFilePath)
+      readRegionFile(sc, bedFilePath)
     }
 
     val counter = new CoverageCounter(sc, bedFile, reads, Array.empty, false, CountingMode.COUNT_WHEN_STARTS)

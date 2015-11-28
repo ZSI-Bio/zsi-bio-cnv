@@ -12,10 +12,10 @@ class CoverageCounterFunSuite extends SparkFunSuite with Matchers {
   val files = new FileUtils with Serializable
 
   sparkTest("calculateReadCoverage test") {
-    val samples = files.scanForSamples(getClass.getResource("/").getPath)
+    val samples = files.scanForSamples(getClass.getResource("/").toString)
     val reads = files.loadReads(sc, samples)
     val bedFile = sc.broadcast {
-      files.readBedFile(getClass.getResource("/test_bed_file.txt").getPath)
+      files.readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
     }
 
     val counter = new CoverageCounter(sc, bedFile, reads, Array.empty, false, CountingMode.COUNT_WHEN_STARTS)

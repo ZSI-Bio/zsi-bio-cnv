@@ -33,7 +33,7 @@ class Coverage(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: S
    * Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
    */
   private val bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]] = sc.broadcast {
-    readBedFile(bedFilePath)
+    readRegionFile(sc, bedFilePath)
   }
 
   /**
