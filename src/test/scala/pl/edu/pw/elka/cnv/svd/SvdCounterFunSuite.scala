@@ -2,18 +2,16 @@ package pl.edu.pw.elka.cnv.svd
 
 import org.scalatest.Matchers
 import pl.edu.pw.elka.cnv.SparkFunSuite
-import pl.edu.pw.elka.cnv.utils.FileUtils
+import pl.edu.pw.elka.cnv.utils.FileUtils.readRegionFile
 
 /**
  * Created by mariusz-macbook on 25/08/15.
  */
 class SvdCounterFunSuite extends SparkFunSuite with Matchers {
 
-  val files = new FileUtils with Serializable
-
   sparkTest("calculateSvd test") {
     val bedFile = sc.broadcast {
-      files.readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
+      readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
     }
 
     val zrpkms = sc.objectFile[(Int, Array[Double])](getClass.getResource("/zrpkms.txt").toString)

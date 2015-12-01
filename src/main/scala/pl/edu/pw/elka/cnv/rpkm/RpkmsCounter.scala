@@ -3,7 +3,7 @@ package pl.edu.pw.elka.cnv.rpkm
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.model.CNVRecord
-import pl.edu.pw.elka.cnv.utils.CNVUtils
+import pl.edu.pw.elka.cnv.utils.CNVUtils.rpkm
 
 import scala.collection.mutable
 
@@ -14,8 +14,7 @@ import scala.collection.mutable
  * @param bedFile Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
  * @param coverage RDD of (regionId, (sampleId, coverage)) containing coverage of given regions by given samples.
  */
-class RpkmsCounter(reads: RDD[(Int, CNVRecord)], bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], coverage: RDD[(Int, Iterable[(Int, Int)])])
-  extends Serializable with CNVUtils {
+class RpkmsCounter(reads: RDD[(Int, CNVRecord)], bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], coverage: RDD[(Int, Iterable[(Int, Int)])]) extends Serializable {
 
   /**
    * Map of (sampleId, total) containing total number of reads in given samples.

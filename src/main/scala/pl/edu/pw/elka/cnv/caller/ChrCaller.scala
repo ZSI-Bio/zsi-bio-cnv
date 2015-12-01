@@ -1,7 +1,8 @@
 package pl.edu.pw.elka.cnv.caller
 
 import org.apache.commons.math3.linear.{BlockRealMatrix, RealMatrix}
-import pl.edu.pw.elka.cnv.utils.{CNVUtils, StatUtils}
+import pl.edu.pw.elka.cnv.utils.CNVUtils.{blackman, convolve}
+import pl.edu.pw.elka.cnv.utils.StatUtils.{mean, stddev}
 
 /**
  * Main class for making calls based on data from one chromosome.
@@ -10,7 +11,7 @@ import pl.edu.pw.elka.cnv.utils.{CNVUtils, StatUtils}
  * @param matrix Matrix after SVD decomposition containing SVD-ZRPKM values from one chromosome.
  * @param threshold +/- Threshold for calling (minimum SVD-ZRPKM).
  */
-class ChrCaller(regions: Array[Int], matrix: RealMatrix, threshold: Double) extends Serializable with CNVUtils with StatUtils {
+class ChrCaller(regions: Array[Int], matrix: RealMatrix, threshold: Double) extends Serializable {
 
   /**
    * Smoothed matrix.

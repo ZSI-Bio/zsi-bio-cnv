@@ -2,24 +2,22 @@ package pl.edu.pw.elka.cnv.rpkm
 
 import org.scalatest.Matchers
 import pl.edu.pw.elka.cnv.SparkFunSuite
-import pl.edu.pw.elka.cnv.utils.FileUtils
+import pl.edu.pw.elka.cnv.utils.FileUtils.{loadReads, readRegionFile, scanForSamples}
 
 /**
  * Created by mariusz-macbook on 10/07/15.
  */
 class RpkmsCounterFunSuite extends SparkFunSuite with Matchers {
 
-  val files = new FileUtils with Serializable
-
   sparkTest("calculateRpkms test") {
-    val samples = files.scanForSamples(getClass.getResource("/").toString)
+    val samples = scanForSamples(getClass.getResource("/").toString)
 
-    val reads1 = files.loadReads(sc, samples).map(r => (0, r._2))
-    val reads2 = files.loadReads(sc, samples).map(r => (1, r._2))
-    val reads3 = files.loadReads(sc, samples).map(r => (2, r._2))
+    val reads1 = loadReads(sc, samples).map(r => (0, r._2))
+    val reads2 = loadReads(sc, samples).map(r => (1, r._2))
+    val reads3 = loadReads(sc, samples).map(r => (2, r._2))
 
     val bedFile = sc.broadcast {
-      files.readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
+      readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
     }
 
     val coverage = sc.objectFile[(Int, Iterable[(Int, Int)])](getClass.getResource("/coverage.txt").toString)

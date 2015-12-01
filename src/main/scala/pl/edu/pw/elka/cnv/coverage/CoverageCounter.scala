@@ -5,7 +5,7 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.filter.ReadFilter
 import pl.edu.pw.elka.cnv.model.CNVRecord
-import pl.edu.pw.elka.cnv.utils.ConvertionUtils
+import pl.edu.pw.elka.cnv.utils.ConversionUtils.{bedFileToChromosomesMap, coverageToMeanRegionCoverage, coverageToRegionCoverage, encodeCoverageId}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -22,8 +22,7 @@ import scala.collection.mutable.ArrayBuffer
  * @param reduceWorkers Number of reduce workers to be used (default value - 12).
  */
 class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], reads: RDD[(Int, CNVRecord)],
-                      readFilters: Array[ReadFilter], parseCigar: Boolean, countingMode: Int, reduceWorkers: Int = 12)
-  extends Serializable with ConvertionUtils {
+                      readFilters: Array[ReadFilter], parseCigar: Boolean, countingMode: Int, reduceWorkers: Int = 12) extends Serializable {
 
   /**
    * Map of (chr, (regionId, start, end)) optimized for searching by chromosome and position.

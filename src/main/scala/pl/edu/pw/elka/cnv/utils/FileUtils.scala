@@ -9,13 +9,14 @@ import org.bdgenomics.adam.rdd.ADAMContext
 import org.bdgenomics.formats.avro.AlignmentRecord
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 import pl.edu.pw.elka.cnv.model.{AlignmentRecordAdapter, CNVRecord, SAMRecordAdapter}
+import pl.edu.pw.elka.cnv.utils.ConversionUtils.chrStrToInt
 
 import scala.collection.mutable
 
 /**
- * Trait for scanning and loading data from BED, Interval, BAM and ADAM files.
+ * Object containing methods for scanning and loading data from BED, Interval, BAM and ADAM files.
  */
-trait FileUtils extends ConvertionUtils {
+object FileUtils {
 
   /**
    * Method for scanning for BAM or ADAM files under given path.

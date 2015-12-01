@@ -2,8 +2,6 @@ package pl.edu.pw.elka.cnv.zrpkm
 
 import org.scalatest.Matchers
 import pl.edu.pw.elka.cnv.SparkFunSuite
-import pl.edu.pw.elka.cnv.coverage.CoverageCounter
-import pl.edu.pw.elka.cnv.utils.FileUtils
 
 /**
  * Created by mariusz-macbook on 10/07/15.

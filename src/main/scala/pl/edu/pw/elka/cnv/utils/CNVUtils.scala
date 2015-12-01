@@ -1,9 +1,9 @@
 package pl.edu.pw.elka.cnv.utils
 
 /**
- * Trait containing common CNV detection methods.
+ * Object containing methods for CNV detection.
  */
-trait CNVUtils {
+object CNVUtils {
 
   /**
    * Method for RPKM calculation.

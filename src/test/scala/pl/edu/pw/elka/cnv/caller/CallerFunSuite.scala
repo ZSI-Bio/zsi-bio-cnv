@@ -3,18 +3,16 @@ package pl.edu.pw.elka.cnv.caller
 import org.apache.commons.math3.linear.RealMatrix
 import org.scalatest.Matchers
 import pl.edu.pw.elka.cnv.SparkFunSuite
-import pl.edu.pw.elka.cnv.utils.FileUtils
+import pl.edu.pw.elka.cnv.utils.FileUtils.readRegionFile
 
 /**
  * Created by mariusz-macbook on 06/10/15.
  */
 class CallerFunSuite extends SparkFunSuite with Matchers {
 
-  val files = new FileUtils with Serializable
-
   sparkTest("caller call test") {
     val bedFile = sc.broadcast {
-      files.readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
+      readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
     }
 
     val matrices = sc.objectFile[(Int, Array[Int], RealMatrix)](getClass.getResource("/matrices.txt").toString)

@@ -3,13 +3,13 @@ package pl.edu.pw.elka.cnv.integration
 import com.typesafe.config.Config
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
-import pl.edu.pw.elka.cnv.utils.FileUtils
+import pl.edu.pw.elka.cnv.utils.FileUtils.{loadReads, readRegionFile, scanForSamples}
 import spark.jobserver.{SparkJobValid, SparkJobValidation}
 
 /**
  * Created by mariusz-macbook on 05/11/15.
  */
-class CalculateRpkmsJob extends SonarJob with FileUtils {
+class CalculateRpkmsJob extends SonarJob {
 
   override def runSingleJob(sc: C, jobConfig: Config): RDD[_] =
     throw new UnsupportedOperationException

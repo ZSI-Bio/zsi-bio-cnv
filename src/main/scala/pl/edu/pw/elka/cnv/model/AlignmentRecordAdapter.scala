@@ -2,7 +2,7 @@ package pl.edu.pw.elka.cnv.model
 
 import htsjdk.samtools.{AlignmentBlock, Cigar, SAMUtils, TextCigarCodec}
 import org.bdgenomics.formats.avro.AlignmentRecord
-import pl.edu.pw.elka.cnv.utils.ConvertionUtils
+import pl.edu.pw.elka.cnv.utils.ConversionUtils.chrStrToInt
 
 import scala.collection.JavaConverters._
 
@@ -11,7 +11,7 @@ import scala.collection.JavaConverters._
  * It implements adapter design pattern that works as a bridge
  * between two incompatible interfaces: SAMRecord and AlignmentRecord.
  */
-class AlignmentRecordAdapter(record: AlignmentRecord) extends CNVRecord with ConvertionUtils {
+class AlignmentRecordAdapter(record: AlignmentRecord) extends CNVRecord {
 
   private lazy val cigar: Cigar =
     TextCigarCodec.decode(record.getCigar)

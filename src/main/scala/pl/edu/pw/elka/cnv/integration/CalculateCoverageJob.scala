@@ -3,13 +3,14 @@ package pl.edu.pw.elka.cnv.integration
 import com.typesafe.config.Config
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.coverage.{CountingMode, CoverageCounter}
-import pl.edu.pw.elka.cnv.utils.FileUtils
+import pl.edu.pw.elka.cnv.utils.ConversionUtils.coverageToRegionCoverage
+import pl.edu.pw.elka.cnv.utils.FileUtils.{loadReads, readRegionFile, scanForSamples}
 import spark.jobserver.{SparkJobValid, SparkJobValidation}
 
 /**
  * Created by mariusz-macbook on 05/11/15.
  */
-class CalculateCoverageJob extends SonarJob with FileUtils {
+class CalculateCoverageJob extends SonarJob {
 
   override def runSingleJob(sc: C, jobConfig: Config): RDD[_] = {
     val bamFilesPath = jobConfig.getString("bamFilesPath")

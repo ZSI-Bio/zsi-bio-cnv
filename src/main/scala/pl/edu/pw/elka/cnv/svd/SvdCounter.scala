@@ -16,8 +16,7 @@ import scala.collection.mutable.ArrayBuffer
  * @param svd Number of components to remove.
  * @param reduceWorkers Number of reduce workers to be used (default value - 12).
  */
-class SvdCounter(bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], zrpkms: RDD[(Int, Array[Double])], svd: Int, reduceWorkers: Int = 12)
-  extends Serializable {
+class SvdCounter(bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], zrpkms: RDD[(Int, Array[Double])], svd: Int, reduceWorkers: Int = 12) extends Serializable {
 
   /**
    * Method for calculation of SVD decomposition based on ZRPKM values given in class constructor.

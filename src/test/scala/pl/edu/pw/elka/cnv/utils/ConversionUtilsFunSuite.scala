@@ -1,9 +1,8 @@
 package pl.edu.pw.elka.cnv.utils
 
-import java.io.Serializable
-
 import org.scalatest.Matchers
 import pl.edu.pw.elka.cnv.SparkFunSuite
+import pl.edu.pw.elka.cnv.utils.ConversionUtils.{bedFileToChromosomesMap, bedFileToRegionChromosomes, bedFileToRegionCoords, bedFileToRegionLengths, chrStrToInt, coverageToRegionCoverage, decodeCoverageId, encodeCoverageId}
 
 import scala.collection.mutable
 
@@ -12,15 +11,13 @@ import scala.collection.mutable
  */
 class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
 
-  val convertions = new ConvertionUtils with Serializable
-
   test("bedFileToChromosomesMap test") {
     val input = mutable.HashMap(
       2429 ->(1, 19203909, 19204106),
       101874 ->(10, 113928069, 113928282),
       179177 ->(20, 47115835, 47116753))
 
-    val output = convertions.bedFileToChromosomesMap(input)
+    val output = bedFileToChromosomesMap(input)
 
     output.keys should have size (3)
     all(output.values) should have size (25000)
@@ -37,7 +34,7 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
       (101874, 10, 113928069, 113928282),
       (179177, 20, 47115835, 47116753))
 
-    val output = convertions.bedFileToRegionChromosomes(input)
+    val output = bedFileToRegionChromosomes(input)
 
     output.keys should have size (3)
 
@@ -53,7 +50,7 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
       (101874, 10, 113928069, 113928282),
       (179177, 20, 47115835, 47116753))
 
-    val output = convertions.bedFileToRegionLengths(input)
+    val output = bedFileToRegionLengths(input)
 
     output.keys should have size (3)
 
@@ -69,7 +66,7 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
       (101874, 10, 113928069, 113928282),
       (179177, 20, 47115835, 47116753))
 
-    val output = convertions.bedFileToRegionCoords(input)
+    val output = bedFileToRegionCoords(input)
 
     output.keys should have size (3)
 
@@ -85,7 +82,7 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
         (5000425385L, 200),
         (12092619574L, 300))
     }
-    val output = convertions.coverageToRegionCoverage(input).collect.toMap
+    val output = coverageToRegionCoverage(input).collect.toMap
 
     output.keys should have size (3)
     all(output.values) should have size (1)
@@ -97,21 +94,21 @@ class ConversionUtilsFunSuite extends SparkFunSuite with Matchers {
   }
 
   test("encodeCoverageId test") {
-    convertions.encodeCoverageId(0, 0) should be(0L)
-    convertions.encodeCoverageId(5, 425385) should be(5000425385L)
-    convertions.encodeCoverageId(12, 92619574) should be(12092619574L)
+    encodeCoverageId(0, 0) should be(0L)
+    encodeCoverageId(5, 425385) should be(5000425385L)
+    encodeCoverageId(12, 92619574) should be(12092619574L)
   }
 
   test("decodeCoverageId test") {
-    convertions.decodeCoverageId(0L) should be((0, 0))
-    convertions.decodeCoverageId(5000425385L) should be((5, 425385))
-    convertions.decodeCoverageId(12092619574L) should be((12, 92619574))
+    decodeCoverageId(0L) should be((0, 0))
+    decodeCoverageId(5000425385L) should be((5, 425385))
+    decodeCoverageId(12092619574L) should be((12, 92619574))
   }
 
   test("chrStrToInt test") {
-    convertions.chrStrToInt("chr10") should be(10)
-    convertions.chrStrToInt("chrX") should be(23)
-    convertions.chrStrToInt("test") should be(0)
+    chrStrToInt("chr10") should be(10)
+    chrStrToInt("chrX") should be(23)
+    chrStrToInt("test") should be(0)
   }
 
 }

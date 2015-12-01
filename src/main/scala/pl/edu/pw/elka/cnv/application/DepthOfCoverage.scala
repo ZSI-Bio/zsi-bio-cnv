@@ -7,7 +7,8 @@ import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.coverage.{CountingMode, CoverageCounter}
 import pl.edu.pw.elka.cnv.filter._
 import pl.edu.pw.elka.cnv.model.CNVRecord
-import pl.edu.pw.elka.cnv.utils.FileUtils
+import pl.edu.pw.elka.cnv.utils.ConversionUtils.coverageToMeanRegionCoverage
+import pl.edu.pw.elka.cnv.utils.FileUtils.{loadReads, readRegionFile, scanForSamples}
 
 import scala.collection.mutable
 
@@ -18,7 +19,7 @@ import scala.collection.mutable
  * @param bedFilePath Path to folder containing BED file.
  * @param bamFilesPath Path to folder containing BAM files.
  */
-class DepthOfCoverage(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String) extends Serializable with FileUtils {
+class DepthOfCoverage(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String) extends Serializable {
 
   /**
    * Map of (sampleId, samplePath) containing all of the found BAM files.

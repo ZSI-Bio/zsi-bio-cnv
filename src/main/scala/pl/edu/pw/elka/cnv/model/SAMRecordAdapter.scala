@@ -1,7 +1,7 @@
 package pl.edu.pw.elka.cnv.model
 
 import htsjdk.samtools.{AlignmentBlock, Cigar, SAMRecord}
-import pl.edu.pw.elka.cnv.utils.ConvertionUtils
+import pl.edu.pw.elka.cnv.utils.ConversionUtils.chrStrToInt
 
 import scala.collection.JavaConverters._
 
@@ -10,7 +10,7 @@ import scala.collection.JavaConverters._
  * It implements adapter design pattern that works as a bridge
  * between two incompatible interfaces: SAMRecord and AlignmentRecord.
  */
-class SAMRecordAdapter(record: SAMRecord) extends CNVRecord with ConvertionUtils {
+class SAMRecordAdapter(record: SAMRecord) extends CNVRecord {
 
   override def getReferenceName: Int =
     chrStrToInt(record.getReferenceName)

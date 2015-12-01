@@ -4,13 +4,13 @@ import com.typesafe.config.Config
 import org.apache.commons.math3.linear.RealMatrix
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.caller.Caller
-import pl.edu.pw.elka.cnv.utils.FileUtils
+import pl.edu.pw.elka.cnv.utils.FileUtils.readRegionFile
 import spark.jobserver.{SparkJobValid, SparkJobValidation}
 
 /**
  * Created by mariusz-macbook on 05/11/15.
  */
-class CalculateCallsJob extends SonarJob with FileUtils {
+class CalculateCallsJob extends SonarJob {
 
   override def runSingleJob(sc: C, jobConfig: Config): RDD[_] =
     throw new UnsupportedOperationException

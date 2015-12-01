@@ -1,19 +1,16 @@
 package pl.edu.pw.elka.cnv.utils
 
-import java.io.Serializable
-
 import org.scalatest.Matchers
 import pl.edu.pw.elka.cnv.SparkFunSuite
+import pl.edu.pw.elka.cnv.utils.FileUtils.{loadReads, readRegionFile, scanForSamples}
 
 /**
  * Created by mariusz-macbook on 25/08/15.
  */
 class FileUtilsFunSuite extends SparkFunSuite with Matchers {
 
-  val files = new FileUtils with Serializable
-
   test("scanForSamples test") {
-    val samples = files.scanForSamples(getClass.getResource("/").toString)
+    val samples = scanForSamples(getClass.getResource("/").toString)
 
     samples.keys should have size (1)
     samples.keys should contain theSameElementsAs Array(0)
@@ -23,7 +20,7 @@ class FileUtilsFunSuite extends SparkFunSuite with Matchers {
 
   sparkTest("loadReads test") {
     val samples = Map(0 -> getClass.getResource("/test_bam_file.bam").toString)
-    val reads = files.loadReads(sc, samples).collect
+    val reads = loadReads(sc, samples).collect
 
     reads should have size (385721)
 
@@ -41,7 +38,7 @@ class FileUtilsFunSuite extends SparkFunSuite with Matchers {
   }
 
   sparkTest("readRegionFile test") {
-    val bedFile = files.readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
+    val bedFile = readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
 
     bedFile.keys should have size (223378)
     bedFile.keys.min should be(0)

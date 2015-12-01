@@ -1,9 +1,9 @@
 package pl.edu.pw.elka.cnv.utils
 
 /**
- * Trait for doing statistical analysis.
+ * Object containing methods for statistical analysis.
  */
-trait StatUtils {
+object StatUtils {
 
   /**
    * Method for mean calculation.

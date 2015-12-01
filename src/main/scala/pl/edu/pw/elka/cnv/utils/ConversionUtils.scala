@@ -7,9 +7,9 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Trait for doing various data conversions.
+ * Object containing methods for various data conversions.
  */
-trait ConvertionUtils {
+object ConversionUtils {
 
   /**
    * Method for converting data from BED file into map optimized for searching by chromosome and position.

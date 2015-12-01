@@ -2,20 +2,18 @@ package pl.edu.pw.elka.cnv.coverage
 
 import org.scalatest.Matchers
 import pl.edu.pw.elka.cnv.SparkFunSuite
-import pl.edu.pw.elka.cnv.utils.FileUtils
+import pl.edu.pw.elka.cnv.utils.FileUtils.{loadReads, readRegionFile, scanForSamples}
 
 /**
  * Created by mariusz-macbook on 10/07/15.
  */
 class CoverageCounterFunSuite extends SparkFunSuite with Matchers {
 
-  val files = new FileUtils with Serializable
-
   sparkTest("calculateReadCoverage test") {
-    val samples = files.scanForSamples(getClass.getResource("/").toString)
-    val reads = files.loadReads(sc, samples)
+    val samples = scanForSamples(getClass.getResource("/").toString)
+    val reads = loadReads(sc, samples)
     val bedFile = sc.broadcast {
-      files.readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
+      readRegionFile(sc, getClass.getResource("/test_bed_file.bed").toString)
     }
 
     val counter = new CoverageCounter(sc, bedFile, reads, Array.empty, false, CountingMode.COUNT_WHEN_STARTS)

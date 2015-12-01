@@ -10,7 +10,8 @@ import pl.edu.pw.elka.cnv.coverage.{CountingMode, CoverageCounter}
 import pl.edu.pw.elka.cnv.model.CNVRecord
 import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
 import pl.edu.pw.elka.cnv.svd.SvdCounter
-import pl.edu.pw.elka.cnv.utils.FileUtils
+import pl.edu.pw.elka.cnv.utils.ConversionUtils.coverageToRegionCoverage
+import pl.edu.pw.elka.cnv.utils.FileUtils.{loadReads, readRegionFile, scanForSamples}
 import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
 
 import scala.collection.mutable
@@ -25,8 +26,7 @@ import scala.collection.mutable
  * @param svd Number of components to remove (default value - 12).
  * @param threshold +/- threshold for calling (minimum SVD-ZRPKM) (default value - 1.5).
  */
-class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String, minMedian: Double = 1.0, svd: Int = 12, threshold: Double = 1.5)
-  extends Serializable with FileUtils {
+class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: String, minMedian: Double = 1.0, svd: Int = 12, threshold: Double = 1.5) extends Serializable {
 
   /**
    * Map of (sampleId, samplePath) containing all of the found BAM files.
