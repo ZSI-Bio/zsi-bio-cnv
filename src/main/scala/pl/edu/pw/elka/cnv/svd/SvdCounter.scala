@@ -3,6 +3,7 @@ package pl.edu.pw.elka.cnv.svd
 import org.apache.commons.math3.linear
 import org.apache.commons.math3.linear.{BlockRealMatrix, RealMatrix}
 import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.MetricsContext.rddToInstrumentedRDD
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
@@ -23,7 +24,7 @@ class SvdCounter(bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], zrpk
    *
    * @return RDD of (chr, regions, matrix) containing matrices after SVD decomposition.
    */
-  def calculateSvd: RDD[(Int, Array[Int], RealMatrix)] =
+  def calculateSvd: RDD[(Int, Array[Int], RealMatrix)] = {
     for {
       (chr, rows) <- prepareRows
       sortedRows = rows.toArray.sortBy(_._1)
@@ -31,13 +32,14 @@ class SvdCounter(bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], zrpk
       svd = new linear.SingularValueDecomposition(matrix)
       newMatrix = reconstructMatrix(svd)
     } yield (chr, sortedRows.map(_._1), newMatrix)
+  } instrument()
 
   /**
    * Method that prepares rows for SVD decomposition.
    *
    * @return RDD of (chr, rows) containing rows for matrices of given chromosomes.
    */
-  private def prepareRows: RDD[(Int, ArrayBuffer[(Int, Array[Double])])] =
+  private def prepareRows: RDD[(Int, ArrayBuffer[(Int, Array[Double])])] = {
     zrpkms.mapPartitions(partition => {
       val rowsMap = new mutable.HashMap[Int, ArrayBuffer[(Int, Array[Double])]]
 
@@ -50,6 +52,7 @@ class SvdCounter(bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], zrpk
 
       rowsMap.iterator
     }).reduceByKey(_ ++ _, reduceWorkers)
+  } instrument()
 
   /**
    * Method that reconstructs matrix after SVD decomposition.

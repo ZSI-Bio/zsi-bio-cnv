@@ -1,6 +1,7 @@
 package pl.edu.pw.elka.cnv.rpkm
 
 import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.MetricsContext.rddToInstrumentedRDD
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.model.CNVRecord
 import pl.edu.pw.elka.cnv.utils.CNVUtils.rpkm
@@ -35,7 +36,7 @@ class RpkmsCounter(reads: RDD[(Int, CNVRecord)], bedFile: Broadcast[mutable.Hash
           case (coverage, sampleId) => rpkm(coverage, stop - start, readCounts(sampleId))
         }
         (regionId, sampleRpkms)
-    }
+    } instrument()
 
   /**
    * Method that puts zeros in place of no coverage value.

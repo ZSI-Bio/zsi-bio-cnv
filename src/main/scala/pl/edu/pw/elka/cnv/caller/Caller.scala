@@ -2,6 +2,7 @@ package pl.edu.pw.elka.cnv.caller
 
 import org.apache.commons.math3.linear.RealMatrix
 import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.MetricsContext.rddToInstrumentedRDD
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
@@ -23,12 +24,13 @@ class Caller(bedFile: Broadcast[mutable.HashMap[Int, (Int, Int, Int)]], matrices
    *
    * @return RDD of (sampleId, chr, start, stop, state) containing detected CNV mutations.
    */
-  def call: RDD[(Int, Int, Int, Int, String)] =
+  def call: RDD[(Int, Int, Int, Int, String)] = {
     for {
       (chr, regions, matrix) <- matrices
       caller = new ChrCaller(regions, matrix, threshold)
       (sampleId, startId, stopId, state) <- caller.call
     } yield (sampleId, chr, getStart(startId), getStop(stopId), state)
+  } instrument()
 
   /**
    * Method that resolves start of given region.

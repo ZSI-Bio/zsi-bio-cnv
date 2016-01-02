@@ -4,6 +4,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path, PathFilter}
 import org.apache.hadoop.io.LongWritable
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.MetricsContext.rddToInstrumentedRDD
 import org.apache.spark.rdd.RDD
 import org.bdgenomics.adam.rdd.ADAMContext
 import org.bdgenomics.formats.avro.AlignmentRecord
@@ -60,7 +61,7 @@ object FileUtils {
             }
         }
       }
-    }
+    } instrument()
 
   /**
    * Method for loading data from BED or Interval file.

@@ -29,7 +29,7 @@ class DepthOfCoverage(@transient sc: SparkContext, bedFilePath: String, bamFiles
   /**
    * RDD of (sampleId, read) containing all of the reads to be analyzed.
    */
-  private val reads: RDD[(Int, CNVRecord)] = loadReads(sc, samples).instrument()
+  private val reads: RDD[(Int, CNVRecord)] = loadReads(sc, samples)
 
   /**
    * Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
@@ -55,7 +55,7 @@ class DepthOfCoverage(@transient sc: SparkContext, bedFilePath: String, bamFiles
     )
 
     val counter = new CoverageCounter(sc, bedFile, reads, filters, true, CountingMode.COUNT_WHEN_OVERLAPS)
-    coverageToMeanRegionCoverage(counter.calculateBaseCoverage, bedFile)
+    coverageToMeanRegionCoverage(counter.calculateBaseCoverage, bedFile).instrument()
   }
 
 }

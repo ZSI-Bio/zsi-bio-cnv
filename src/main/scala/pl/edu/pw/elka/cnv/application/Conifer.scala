@@ -36,7 +36,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   /**
    * RDD of (sampleId, read) containing all of the reads to be analyzed.
    */
-  private val reads: RDD[(Int, CNVRecord)] = loadReads(sc, samples).instrument()
+  private val reads: RDD[(Int, CNVRecord)] = loadReads(sc, samples)
 
   /**
    * Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
@@ -52,7 +52,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    */
   def coverage: RDD[(Int, Iterable[(Int, Int)])] = {
     val counter = new CoverageCounter(sc, bedFile, reads, Array.empty, false, CountingMode.COUNT_WHEN_STARTS)
-    coverageToRegionCoverage(counter.calculateReadCoverage)
+    coverageToRegionCoverage(counter.calculateReadCoverage).instrument()
   }
 
   /**
@@ -63,7 +63,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    */
   def rpkms(coverage: RDD[(Int, Iterable[(Int, Int)])]): RDD[(Int, Array[Double])] = {
     val counter = new RpkmsCounter(reads, bedFile, coverage)
-    counter.calculateRpkms
+    counter.calculateRpkms.instrument()
   }
 
   /**
@@ -74,7 +74,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    */
   def zrpkms(rpkms: RDD[(Int, Array[Double])]): RDD[(Int, Array[Double])] = {
     val counter = new ZrpkmsCounter(rpkms, minMedian)
-    counter.calculateZrpkms
+    counter.calculateZrpkms.instrument()
   }
 
   /**
@@ -85,7 +85,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    */
   def svd(zrpkms: RDD[(Int, Array[Double])]): RDD[(Int, Array[Int], RealMatrix)] = {
     val counter = new SvdCounter(bedFile, zrpkms, svd)
-    counter.calculateSvd
+    counter.calculateSvd.instrument()
   }
 
   /**
@@ -96,7 +96,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
    */
   def call(matrices: RDD[(Int, Array[Int], RealMatrix)]): RDD[(Int, Int, Int, Int, String)] = {
     val caller = new Caller(bedFile, matrices, threshold)
-    caller.call
+    caller.call.instrument()
   }
 
   /**
@@ -121,7 +121,7 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
     // 5. Make calls
     val calculatedCalls = call(calculatedMatrices)
 
-    calculatedCalls
+    calculatedCalls.instrument()
   }
 
 }

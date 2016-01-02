@@ -1,6 +1,7 @@
 package pl.edu.pw.elka.cnv.utils
 
 import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.MetricsContext.rddToInstrumentedRDD
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
@@ -86,7 +87,7 @@ object ConversionUtils {
       case (coverageId, coverage) =>
         val (sampleId, regionId) = decodeCoverageId(coverageId)
         (regionId, (sampleId, coverage))
-    } groupByKey
+    } groupByKey() instrument()
 
   /**
    * Method for converting internal coverage representation used for efficiency purposes into RDD optimized for searching by region ID.
@@ -101,7 +102,7 @@ object ConversionUtils {
         val (_, start, end) = bedFile.value(regionId)
         val meanCoverage = coverage.toDouble / (end - start + 1)
         (regionId, (sampleId, meanCoverage))
-    } groupByKey
+    } groupByKey() instrument()
 
   /**
    * Method for converting sampleId and regionId into single coverageId used for efficiency purposes.

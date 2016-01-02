@@ -1,5 +1,6 @@
 package pl.edu.pw.elka.cnv.zrpkm
 
+import org.apache.spark.rdd.MetricsContext.rddToInstrumentedRDD
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.utils.CNVUtils.zrpkm
 import pl.edu.pw.elka.cnv.utils.StatUtils.{median, stddev}
@@ -17,7 +18,7 @@ class ZrpkmsCounter(rpkms: RDD[(Int, Array[Double])], minMedian: Double) extends
    *
    * @return RDD of (regionId, zrpkms) containing calculated ZRPKM values.
    */
-  def calculateZrpkms: RDD[(Int, Array[Double])] =
+  def calculateZrpkms: RDD[(Int, Array[Double])] = {
     for {
       (regionId, sampleRpkms) <- rpkms
 
@@ -29,5 +30,6 @@ class ZrpkmsCounter(rpkms: RDD[(Int, Array[Double])], minMedian: Double) extends
         rpkm => zrpkm(rpkm, med, std)
       }
     } yield (regionId, sampleZrpkms)
+  } instrument()
 
 }

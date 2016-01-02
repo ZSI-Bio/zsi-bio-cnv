@@ -2,6 +2,7 @@ package pl.edu.pw.elka.cnv.coverage
 
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.MetricsContext.rddToInstrumentedRDD
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.filter.ReadFilter
 import pl.edu.pw.elka.cnv.model.CNVRecord
@@ -49,7 +50,7 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
    *
    * @return RDD of (coverageId, coverage). For more information about coverageId see [[encodeCoverageId]] method.
    */
-  def calculateReadCoverage: RDD[(Long, Int)] =
+  def calculateReadCoverage: RDD[(Long, Int)] = {
     filteredReads.mapPartitions(partition => {
       val regionsCountMap = new mutable.HashMap[Long, Int]
 
@@ -73,6 +74,7 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
 
       regionsCountMap.iterator
     }).reduceByKey(_ + _, reduceWorkers)
+  } instrument()
 
   /**
    * Method for calculation of depth of coverage based on regions and reads given in class constructor.
@@ -80,7 +82,7 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
    *
    * @return RDD of (coverageId, coverage). For more information about coverageId see [[encodeCoverageId]] method.
    */
-  def calculateBaseCoverage: RDD[(Long, Int)] =
+  def calculateBaseCoverage: RDD[(Long, Int)] = {
     filteredReads.mapPartitions(partition => {
       val regionsCountMap = new mutable.HashMap[Long, Int]
 
@@ -105,6 +107,7 @@ class CoverageCounter(@transient sc: SparkContext, bedFile: Broadcast[mutable.Ha
 
       regionsCountMap.iterator
     }).reduceByKey(_ + _, reduceWorkers)
+  } instrument()
 
   /**
    * Method returning flag that determines whether or not given block covers given region according to a chosen counting mode.

@@ -28,7 +28,7 @@ class Coverage(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: S
   /**
    * RDD of (sampleId, read) containing all of the reads to be analyzed.
    */
-  private val reads: RDD[(Int, CNVRecord)] = loadReads(sc, samples).instrument()
+  private val reads: RDD[(Int, CNVRecord)] = loadReads(sc, samples)
 
   /**
    * Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
@@ -44,7 +44,7 @@ class Coverage(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: S
    */
   def calculate: RDD[(Int, Iterable[(Int, Int)])] = {
     val counter = new CoverageCounter(sc, bedFile, reads, Array.empty, false, CountingMode.COUNT_WHEN_STARTS)
-    coverageToRegionCoverage(counter.calculateReadCoverage)
+    coverageToRegionCoverage(counter.calculateReadCoverage).instrument()
   }
 
 }
