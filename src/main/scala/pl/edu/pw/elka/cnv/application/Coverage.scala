@@ -6,6 +6,7 @@ import org.apache.spark.rdd.MetricsContext.rddToInstrumentedRDD
 import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.coverage.{CountingMode, CoverageCounter}
 import pl.edu.pw.elka.cnv.model.CNVRecord
+import pl.edu.pw.elka.cnv.timer.CNVTimers._
 import pl.edu.pw.elka.cnv.utils.ConversionUtils.coverageToRegionCoverage
 import pl.edu.pw.elka.cnv.utils.FileUtils.{loadReads, readRegionFile, scanForSamples}
 
@@ -42,7 +43,7 @@ class Coverage(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: S
    *
    * @return RDD of (regionId, (sampleId, coverage)) containing calculated coverage.
    */
-  def calculate: RDD[(Int, Iterable[(Int, Int)])] = {
+  def calculate: RDD[(Int, Iterable[(Int, Int)])] = CoverageTimer.time {
     val counter = new CoverageCounter(sc, bedFile, reads, Array.empty, false, CountingMode.COUNT_WHEN_STARTS)
     coverageToRegionCoverage(counter.calculateReadCoverage).instrument()
   }

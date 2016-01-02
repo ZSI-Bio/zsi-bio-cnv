@@ -10,6 +10,7 @@ import pl.edu.pw.elka.cnv.coverage.{CountingMode, CoverageCounter}
 import pl.edu.pw.elka.cnv.model.CNVRecord
 import pl.edu.pw.elka.cnv.rpkm.RpkmsCounter
 import pl.edu.pw.elka.cnv.svd.SvdCounter
+import pl.edu.pw.elka.cnv.timer.CNVTimers._
 import pl.edu.pw.elka.cnv.utils.ConversionUtils.coverageToRegionCoverage
 import pl.edu.pw.elka.cnv.utils.FileUtils.{loadReads, readRegionFile, scanForSamples}
 import pl.edu.pw.elka.cnv.zrpkm.ZrpkmsCounter
@@ -107,19 +108,29 @@ class Conifer(@transient sc: SparkContext, bedFilePath: String, bamFilesPath: St
   def calculate: RDD[(Int, Int, Int, Int, String)] = {
 
     // 1. Calculate coverage
-    val calculatedCoverage = coverage
+    val calculatedCoverage = CoverageTimer.time {
+      coverage
+    }
 
     // 2. Calculate RPKM values
-    val calculatedRpkms = rpkms(calculatedCoverage)
+    val calculatedRpkms = RpkmTimer.time {
+      rpkms(calculatedCoverage)
+    }
 
     // 3. Calculate ZRPKM values
-    val calculatedZrpkms = zrpkms(calculatedRpkms)
+    val calculatedZrpkms = ZrpkmTimer.time {
+      zrpkms(calculatedRpkms)
+    }
 
     // 4. Calculate SVD-ZRPKM values
-    val calculatedMatrices = svd(calculatedZrpkms)
+    val calculatedMatrices = SvdTimer.time {
+      svd(calculatedZrpkms)
+    }
 
     // 5. Make calls
-    val calculatedCalls = call(calculatedMatrices)
+    val calculatedCalls = CallingTimer.time {
+      call(calculatedMatrices)
+    }
 
     calculatedCalls.instrument()
   }

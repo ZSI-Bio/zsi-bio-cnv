@@ -7,6 +7,7 @@ import org.apache.spark.rdd.RDD
 import pl.edu.pw.elka.cnv.coverage.{CountingMode, CoverageCounter}
 import pl.edu.pw.elka.cnv.filter._
 import pl.edu.pw.elka.cnv.model.CNVRecord
+import pl.edu.pw.elka.cnv.timer.CNVTimers
 import pl.edu.pw.elka.cnv.utils.ConversionUtils.coverageToMeanRegionCoverage
 import pl.edu.pw.elka.cnv.utils.FileUtils.{loadReads, readRegionFile, scanForSamples}
 
@@ -43,7 +44,8 @@ class DepthOfCoverage(@transient sc: SparkContext, bedFilePath: String, bamFiles
    *
    * @return RDD of (regionId, (sampleId, coverage)) containing calculated coverage.
    */
-  def calculate: RDD[(Int, Iterable[(Int, Double)])] = {
+  def calculate: RDD[(Int, Iterable[(Int, Double)])] = CNVTimers.CoverageTimer.time {
+    
     val filters = Array(
       new NotPrimaryAlignmentFilter,
       new FailsVendorQualityCheckFilter,
