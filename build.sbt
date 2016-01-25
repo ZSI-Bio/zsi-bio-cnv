@@ -6,7 +6,7 @@ scalaVersion := "2.10.4"
 
 libraryDependencies ++= Seq(
   "org.scalatest" % "scalatest_2.10" % "3.0.0-M12" % "test",
-  "org.apache.spark" % "spark-core_2.10" % "1.5.2" % "provided",
+  "org.apache.spark" % "spark-core_2.10" % "1.6.0" % "provided",
   "org.bdgenomics.adam" % "adam-core_2.10" % "0.18.2"
     exclude("org.scalatest", "scalatest_2.10")
     exclude("org.apache.spark", "spark-core_2.10")
