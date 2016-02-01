@@ -6,7 +6,9 @@ import org.apache.hadoop.io.LongWritable
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.MetricsContext.rddToInstrumentedRDD
 import org.apache.spark.rdd.RDD
+import org.bdgenomics.adam.projections.{AlignmentRecordField, Projection}
 import org.bdgenomics.adam.rdd.ADAMContext
+import org.bdgenomics.adam.rdd.ADAMContext.sparkContextToADAMContext
 import org.bdgenomics.formats.avro.AlignmentRecord
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 import pl.edu.pw.elka.cnv.model.{AlignmentRecordAdapter, CNVRecord, SAMRecordAdapter}
@@ -18,6 +20,20 @@ import scala.collection.mutable
  * Object containing methods for scanning and loading data from BED, Interval, BAM and ADAM files.
  */
 object FileUtils {
+
+  val projection = Projection(
+    AlignmentRecordField.contig,
+    AlignmentRecordField.start,
+    AlignmentRecordField.end,
+    AlignmentRecordField.mapq,
+    AlignmentRecordField.sequence,
+    AlignmentRecordField.cigar,
+    AlignmentRecordField.qual,
+    AlignmentRecordField.primaryAlignment,
+    AlignmentRecordField.failedVendorQualityChecks,
+    AlignmentRecordField.duplicateRead,
+    AlignmentRecordField.readMapped
+  )
 
   /**
    * Method for scanning for BAM or ADAM files under given path.
@@ -56,7 +72,7 @@ object FileUtils {
               read => (sampleId, new SAMRecordAdapter(read._2.get))
             }
           case adam if samplePath.endsWith(".adam") =>
-            new ADAMContext(sc).loadParquet[AlignmentRecord](samplePath) map {
+            sc.loadParquet[AlignmentRecord](samplePath, projection = Some(projection)) map {
               read => (sampleId, new AlignmentRecordAdapter(read))
             }
         }
