@@ -11,7 +11,7 @@ class ChrCallerFunSuite extends SparkFunSuite with Matchers {
 
   sparkTest("chr caller call test") {
     val matrix = sc.objectFile[(Int, Array[Int], RealMatrix)](getClass.getResource("/matrices.txt").toString)
-      .collect.apply(21)
+      .sortBy(_._1).collect.apply(9)
     val caller = new ChrCaller(matrix._2, matrix._3, 1.5)
     val calls = caller.call
 
