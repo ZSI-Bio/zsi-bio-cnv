@@ -1,21 +1,30 @@
+import scala.util.Properties
+
 name := """zsi-bio-cnv"""
 
 version := "1.0"
 
 scalaVersion := "2.10.4"
 
+val DEFAULT_SPARK_VERSION = "1.6.0"
+val DEFAULT_HADOOP_VERSION = "2.7.1"
+
+lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_VERSION)
+lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
+
 libraryDependencies ++= Seq(
-  "org.scalatest" % "scalatest_2.10" % "3.0.0-M12" % "test",
-  "org.apache.spark" % "spark-core_2.10" % "1.6.0" % "provided",
+  "org.scalatest" % "scalatest_2.10" % "3.0.0-M15" % "test",
+  "org.apache.spark" % "spark-core_2.10" % sparkVersion % "provided",
+  "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "provided",
   "org.bdgenomics.adam" % "adam-core_2.10" % "0.18.2"
-    exclude("org.scalatest", "scalatest_2.10")
     exclude("org.apache.spark", "spark-core_2.10")
-    exclude("org.bdgenomics.utils", "utils-metrics_2.10")
-    exclude("org.seqdoop", "hadoop-bam"),
+    exclude("org.apache.hadoop", "hadoop-client")
+    exclude("org.bdgenomics.utils", "utils-metrics_2.10"),
   "org.bdgenomics.utils" % "utils-misc_2.10" % "0.2.3"
-    exclude("org.scalatest", "scalatest_2.10")
-    exclude("org.apache.spark", "spark-core_2.10"),
-  "org.seqdoop" % "hadoop-bam" % "7.2.1",
+    exclude("org.apache.spark", "spark-core_2.10")
+    exclude("org.apache.hadoop", "hadoop-client"),
+  "org.seqdoop" % "hadoop-bam" % "7.2.1"
+    exclude("org.apache.hadoop", "hadoop-client"),
   "spark.jobserver" % "job-server-api_2.10" % "0.5.2"
 )
 
