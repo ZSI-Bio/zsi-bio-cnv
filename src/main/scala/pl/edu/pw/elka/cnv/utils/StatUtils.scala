@@ -1,26 +1,39 @@
 package pl.edu.pw.elka.cnv.utils
 
 /**
- * Created by mariusz-macbook on 26/04/15.
- *
- * Trait for doing statistical analysis.
+ * Object containing methods for statistical analysis.
  */
-trait StatUtils {
+object StatUtils {
 
-  //  def stddev(data: Array[Double]): Double = {
-  //    val mean = data.sum / data.size
-  //    data.map(x => (x - mean) * (x - mean)).sum / data.size
-  //  }
-  //
-  //  def median(data: Array[Double]): Double = {
-  //    val (lower, upper) = data.sorted.splitAt(data.size / 2)
-  //    if (data.size % 2 == 0) (lower.last + upper.head) / 2 else upper.head
-  //  }
-  //
-  //  def rpkm(count: Long, len: Long, total: Double): Double =
-  //    return (1000000000 * count) / (len * total)
-  //
-  //  def zrpkm(rpkm: Double, median: Double, stddev: Double): Double =
-  //    return (rpkm - median) / stddev
+  /**
+   * Method for mean calculation.
+   *
+   * @param data Array of double values.
+   * @return Calculated mean value.
+   */
+  def mean(data: Array[Double]): Double =
+    data.sum / data.size
+
+  /**
+   * Method for stddev calculation.
+   *
+   * @param data Array of double values.
+   * @return Calculated stddev value.
+   */
+  def stddev(data: Array[Double]): Double = {
+    val m = mean(data)
+    math.sqrt(data.map(x => math.pow(x - m, 2)).sum / data.size)
+  }
+
+  /**
+   * Method for median calculation.
+   *
+   * @param data Array of double values.
+   * @return Calculated median value.
+   */
+  def median(data: Array[Double]): Double = {
+    val (lower, upper) = data.sorted.splitAt(data.size / 2)
+    if (data.size % 2 == 0) (lower.last + upper.head) / 2 else upper.head
+  }
 
 }

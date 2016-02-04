@@ -1,63 +1,120 @@
 package pl.edu.pw.elka.cnv.utils
 
-import java.io.File
-
-import htsjdk.samtools.SAMRecord
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path, PathFilter}
 import org.apache.hadoop.io.LongWritable
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.MetricsContext.rddToInstrumentedRDD
 import org.apache.spark.rdd.RDD
+import org.bdgenomics.adam.projections.{AlignmentRecordField, Projection}
+import org.bdgenomics.adam.rdd.ADAMContext
+import org.bdgenomics.adam.rdd.ADAMContext.sparkContextToADAMContext
+import org.bdgenomics.formats.avro.AlignmentRecord
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
+import pl.edu.pw.elka.cnv.model.{AlignmentRecordAdapter, CNVRecord, SAMRecordAdapter}
+import pl.edu.pw.elka.cnv.utils.ConversionUtils.chrStrToInt
+
+import scala.collection.mutable
 
 /**
- * Created by mariusz-macbook on 26/04/15.
- *
- * Trait for scanning and loading data from BED and BAM files.
+ * Object containing methods for scanning and loading data from BED, Interval, BAM and ADAM files.
  */
-trait FileUtils {
+object FileUtils {
+
+  val projection = Projection(
+    AlignmentRecordField.contig,
+    AlignmentRecordField.start,
+    AlignmentRecordField.end,
+    AlignmentRecordField.mapq,
+    AlignmentRecordField.sequence,
+    AlignmentRecordField.cigar,
+    AlignmentRecordField.qual,
+    AlignmentRecordField.primaryAlignment,
+    AlignmentRecordField.failedVendorQualityChecks,
+    AlignmentRecordField.duplicateRead,
+    AlignmentRecordField.readMapped
+  )
 
   /**
-   * Method for scanning for BAM files under given path.
+   * Method for scanning for BAM or ADAM files under given path.
    *
-   * @param path Path to folder containing BAM files.
-   * @return Array of (sampleId, samplePath) containing all of the found BAM files.
+   * @param path Path to folder containing BAM or ADAM files.
+   * @return Map of (sampleId, samplePath) containing all of the found BAM or ADAM files.
    */
-  def scanForSamples(path: String): Array[(Int, String)] =
-    new File(path).listFiles.filter(
-      file => file.getName.endsWith(".bam")
-    ).zipWithIndex.map {
+  def scanForSamples(path: String): Map[Int, String] = {
+    val fs = FileSystem.get(new Configuration())
+    fs.listStatus(new Path(path), new PathFilter {
+      override def accept(path: Path): Boolean =
+        path.getName match {
+          case bam if bam.endsWith(".bam") => true
+          case adam if adam.endsWith(".adam") => true
+          case _ => false
+        }
+    }).zipWithIndex map {
       case (file, index) =>
-        (index, file.getPath)
-    }
+        (index, file.getPath.toString)
+    } toMap
+  }
 
   /**
    * Method for loading all of the samples into single RDD.
    *
    * @param sc Apache Spark context.
-   * @param samples Array of (sampleId, samplePath) containing all of the samples to be analyzed.
+   * @param samples Map of (sampleId, samplePath) containing all of the samples to be analyzed.
    * @return RDD of (sampleId, read) containing all of the reads to be analyzed.
    */
-  def loadReads(sc: SparkContext, samples: Array[(Int, String)]): RDD[(Int, SAMRecord)] =
-    samples.foldLeft(sc.parallelize[(Int, SAMRecord)](Seq())) {
+  def loadReads(sc: SparkContext, samples: Map[Int, String]): RDD[(Int, CNVRecord)] =
+    samples.foldLeft(sc.parallelize[(Int, CNVRecord)](Seq())) {
       case (acc, (sampleId, samplePath)) => acc union {
-        sc.newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](samplePath) map {
-          read => (sampleId, read._2.get)
+        samplePath match {
+          case bam if samplePath.endsWith(".bam") =>
+            sc.newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](samplePath) map {
+              read => (sampleId, new SAMRecordAdapter(read._2.get))
+            }
+          case adam if samplePath.endsWith(".adam") =>
+            sc.loadParquet[AlignmentRecord](samplePath, projection = Some(projection)) map {
+              read => (sampleId, new AlignmentRecordAdapter(read))
+            }
         }
       }
-    }
+    } instrument()
 
   /**
-   * Method for loading data from BED file.
+   * Method for loading data from BED or Interval file.
    *
-   * @param sc Apache Spark context.
-   * @param path Path to folder containing BED file.
-   * @return RDD of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
+   * @param path Path to BED or Interval file.
+   * @return Map of (regionId, (chr, start, end)) containing all of the regions to be analyzed.
    */
-  def readBedFile(sc: SparkContext, path: String): RDD[(Int, (String, Int, Int))] =
-    sc.textFile(path).zipWithIndex map {
-      case (line, regionId) => line.split("\t") match {
-        case Array(chr, start, end, _*) =>
-          (regionId.toInt, (chr, start.toInt, end.toInt))
+  def readRegionFile(sc: SparkContext, path: String): mutable.HashMap[Int, (Int, Int, Int)] = {
+
+    def readBedFile: mutable.HashMap[Int, (Int, Int, Int)] = {
+      val result = new mutable.HashMap[Int, (Int, Int, Int)]
+      sc.textFile(path).collect.zipWithIndex foreach {
+        case (line, regionId) => line.split("\t") match {
+          case Array(chr, start, end, _*) =>
+            result(regionId) = ((chrStrToInt(chr), start.toInt, end.toInt))
+        }
       }
+      result
     }
+
+    def readIntervalFile: mutable.HashMap[Int, (Int, Int, Int)] = {
+      val result = new mutable.HashMap[Int, (Int, Int, Int)]
+      sc.textFile(path).collect.zipWithIndex foreach {
+        case (line, regionId) => line.split(":") match {
+          case Array(chr, coords) => coords.split("-") match {
+            case Array(start, end) =>
+              result(regionId) = ((chrStrToInt(chr), start.toInt, end.toInt))
+          }
+        }
+      }
+      result
+    }
+
+    path match {
+      case bed if path.endsWith(".bed") => readBedFile
+      case interval if path.endsWith(".interval_list") => readIntervalFile
+    }
+  }
 
 }

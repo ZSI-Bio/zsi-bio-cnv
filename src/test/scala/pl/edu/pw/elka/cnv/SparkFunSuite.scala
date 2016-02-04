@@ -23,7 +23,7 @@ trait SparkFunSuite extends FunSuite {
   private def createSpark(appName: String): SparkContext = {
     val conf = new SparkConf()
       .setAppName(appName)
-      .setMaster("local[*]")
+      .setMaster("local[4]")
       .set("spark.driver.host", "127.0.0.1")
     new SparkContext(conf)
   }

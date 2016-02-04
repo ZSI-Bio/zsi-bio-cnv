@@ -1,8 +1,6 @@
 package pl.edu.pw.elka.cnv.coverage
 
 /**
- * Created by mariusz-macbook on 26/04/15.
- *
  * Object with values representing different approaches to calculation of coverage.
  */
 object CountingMode {
